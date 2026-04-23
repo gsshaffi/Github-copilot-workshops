@@ -1,0 +1,46 @@
+###############################################
+# Docker Compose — Connells Dev Environment
+#
+# STATUS: Partial — missing services and config.
+# Use Copilot to complete this.
+#
+# The full stack should include:
+# - The .NET web API (build from Dockerfile)
+# - SQL Server 2022 container
+# - Redis cache container
+# - A shared network
+# - Volume mounts for data persistence
+# - Health checks for all services
+###############################################
+
+version: '3.8'
+
+services:
+  web-api:
+    build:
+      context: ../
+      dockerfile: pipelines/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=ConnellsDB;User=sa;Password=YourStr0ngPassw0rd!;TrustServerCertificate=true
+    depends_on:
+      - sqlserver
+
+  # TODO: Add SQL Server 2022 container
+  # - Use mcr.microsoft.com/mssql/server:2022-latest
+  # - Set SA password via environment variable
+  # - Map port 1433
+  # - Add a volume for data persistence
+  # - Add a health check
+
+  # TODO: Add Redis container  
+  # - Use redis:7-alpine
+  # - Map port 6379
+  # - Add a volume for data persistence
+  # - Add a health check
+
+# TODO: Add a named network for all services
+
+# TODO: Add named volumes for SQL Server and Redis data

@@ -1,0 +1,68 @@
+####################################################################
+# Azure DevOps Pipeline — Connells Web Application
+#
+# STATUS: Incomplete — several stages and steps are missing.
+# Use Copilot to complete this pipeline.
+#
+# The finished pipeline should:
+# - Build a .NET 8 application
+# - Run unit tests with code coverage
+# - Publish the artifact
+# - Deploy to a staging environment
+# - Run smoke tests
+# - Deploy to production (with approval gate)
+####################################################################
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  dotnetVersion: '8.0.x'
+  projectPath: 'src/Connells.Web/Connells.Web.csproj'
+  testProjectPath: 'tests/Connells.Web.Tests/Connells.Web.Tests.csproj'
+
+stages:
+  - stage: Build
+    displayName: 'Build & Test'
+    jobs:
+      - job: BuildJob
+        displayName: 'Build Application'
+        steps:
+          - task: UseDotNet@2
+            displayName: 'Install .NET SDK'
+            inputs:
+              packageType: sdk
+              version: $(dotnetVersion)
+
+          - script: dotnet restore $(projectPath)
+            displayName: 'Restore NuGet packages'
+
+          - script: dotnet build $(projectPath) --configuration $(buildConfiguration) --no-restore
+            displayName: 'Build solution'
+
+          # TODO: Add a step to run unit tests with code coverage
+          # Hint: Use "dotnet test" with --collect:"XPlat Code Coverage"
+
+          # TODO: Add a step to publish the build output
+          # Hint: Use "dotnet publish" and then PublishBuildArtifacts@1
+
+  # TODO: Add a Staging deployment stage
+  # It should:
+  # - Download the build artifact
+  # - Deploy to an Azure App Service (staging slot)
+  # - Run a smoke test (curl the health endpoint)
+  # - Have a condition: only run on the main branch
+
+  # TODO: Add a Production deployment stage
+  # It should:
+  # - Depend on the Staging stage
+  # - Have a manual approval gate (use environment with approvals)
+  # - Deploy to the production App Service
+  # - Run a smoke test

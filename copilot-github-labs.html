@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connells &mdash; GitHub Copilot Hands-On Lab Guide</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f6f8fa;
+    --surface-raised: #eef1f5;
+    --border: #d1d9e0;
+    --text: #1f2328;
+    --text-muted: #636c76;
+    --accent: #0969da;
+    --accent-subtle: #ddf4ff;
+    --green: #1a7f37;
+    --green-subtle: #dafbe1;
+    --yellow: #9a6700;
+    --yellow-subtle: #fff8c5;
+    --red: #cf222e;
+    --red-subtle: #ffebe9;
+    --purple: #8250df;
+    --purple-subtle: #fbefff;
+    --cyan: #0550ae;
+    --orange: #bc4c00;
+    --orange-subtle: #fff1e5;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 310px;
+    min-width: 310px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 1.5rem 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    overflow-y: auto;
+    z-index: 100;
+  }
+
+  .sidebar-header {
+    padding: 0 1.25rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.75rem;
+  }
+
+  .sidebar-header h1 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .sidebar-header .meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.35rem;
+  }
+
+  .nav-list { list-style: none; padding: 0; }
+  .nav-list li { margin: 0; }
+
+  .nav-group-label {
+    padding: 0.75rem 1.25rem 0.25rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 1.25rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+
+  .nav-link:hover { background: var(--surface-raised); color: var(--text); }
+
+  .nav-link.active {
+    background: var(--accent-subtle);
+    color: var(--accent);
+    border-left-color: var(--accent);
+    font-weight: 600;
+  }
+
+  .nav-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--surface-raised); color: var(--text-muted);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; font-weight: 700; flex-shrink: 0;
+  }
+
+  .nav-link.active .nav-num { background: var(--accent); color: #fff; }
+
+  .main {
+    margin-left: 310px;
+    flex: 1;
+    max-width: 980px;
+    padding: 2.5rem 3rem;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .page-title {
+    font-size: 1.7rem; font-weight: 700; margin-bottom: 0.4rem;
+    color: var(--text); display: flex; align-items: center; gap: 0.6rem;
+  }
+
+  .page-subtitle {
+    color: var(--text-muted); font-size: 0.95rem;
+    margin-bottom: 2rem; padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;
+  }
+  .card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .card p, .card li { font-size: 0.92rem; color: var(--text); line-height: 1.65; }
+  .card ul, .card ol { margin: 0.5rem 0 0 1.2rem; }
+  .card ul li, .card ol li { margin-bottom: 0.3rem; }
+
+  .info-box {
+    padding: 1rem 1.25rem; border-radius: 8px;
+    margin-bottom: 1.25rem; font-size: 0.92rem; line-height: 1.6;
+  }
+  .info-box.blue { background: var(--accent-subtle); border-left: 4px solid var(--accent); }
+  .info-box.green { background: var(--green-subtle); border-left: 4px solid var(--green); }
+  .info-box.yellow { background: var(--yellow-subtle); border-left: 4px solid var(--yellow); }
+  .info-box.orange { background: var(--orange-subtle); border-left: 4px solid var(--orange); }
+  .info-box.purple { background: var(--purple-subtle); border-left: 4px solid var(--purple); }
+  .info-box.red { background: var(--red-subtle); border-left: 4px solid var(--red); }
+  .info-box strong { font-weight: 600; }
+
+  .compare-table {
+    width: 100%; border-collapse: collapse;
+    margin: 1.25rem 0; font-size: 0.86rem;
+  }
+  .compare-table th, .compare-table td {
+    padding: 0.7rem 0.9rem; border: 1px solid var(--border);
+    text-align: left; vertical-align: top;
+  }
+  .compare-table th {
+    background: var(--surface); font-weight: 600; font-size: 0.8rem;
+    text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-muted);
+  }
+  .compare-table td { line-height: 1.5; }
+  .compare-table tr:nth-child(even) td { background: #fafbfc; }
+
+  .badge {
+    display: inline-block; padding: 0.15rem 0.55rem;
+    border-radius: 12px; font-size: 0.75rem; font-weight: 600;
+    margin-right: 0.3rem;
+  }
+  .badge.blue { background: var(--accent-subtle); color: var(--accent); }
+  .badge.green { background: var(--green-subtle); color: var(--green); }
+  .badge.purple { background: var(--purple-subtle); color: var(--purple); }
+  .badge.orange { background: var(--orange-subtle); color: var(--orange); }
+  .badge.yellow { background: var(--yellow-subtle); color: var(--yellow); }
+  .badge.red { background: var(--red-subtle); color: var(--red); }
+
+  h1 { font-size: 1.55rem; font-weight: 700; margin-bottom: 0.5rem; }
+  h2 { font-size: 1.3rem; font-weight: 700; margin: 2rem 0 0.75rem; }
+  h4 { font-size: 1rem; margin: 1.25rem 0 0.5rem; color: var(--text); }
+  p { margin-bottom: 0.75rem; font-size: 0.93rem; }
+  ul, ol { margin: 0.5rem 0 1rem 1.4rem; font-size: 0.93rem; }
+  li { margin-bottom: 0.35rem; }
+
+  .page-nav {
+    display: flex; justify-content: space-between;
+    margin-top: 3rem; padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .page-nav-btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.5rem 1rem; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 6px;
+    color: var(--accent); font-size: 0.87rem; font-weight: 500;
+    cursor: pointer; text-decoration: none; transition: all 0.15s;
+  }
+  .page-nav-btn:hover { background: var(--accent-subtle); border-color: var(--accent); }
+  .page-nav-btn.disabled { opacity: 0.35; pointer-events: none; }
+
+  .step-list { list-style: none; margin: 1rem 0; padding: 0; }
+  .step-list li {
+    display: flex; gap: 0.75rem; align-items: flex-start;
+    margin-bottom: 1rem; font-size: 0.92rem;
+  }
+  .step-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78rem; font-weight: 700; flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+  @media (max-width: 900px) { .two-col, .three-col { grid-template-columns: 1fr; } }
+
+  .prompt-box {
+    background: #f5f0ff; color: #2d1b69;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.85rem; line-height: 1.55;
+    padding: 1.25rem 1.5rem; border-radius: 8px;
+    margin: 1rem 0; white-space: pre-wrap;
+    position: relative;
+    border-left: 4px solid var(--purple);
+  }
+  .prompt-box .prompt-label {
+    position: absolute; top: -0.55rem; left: 1rem;
+    background: var(--purple); color: #fff;
+    padding: 0.1rem 0.65rem; border-radius: 4px;
+    font-size: 0.7rem; font-weight: 700; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    letter-spacing: 0.03em;
+  }
+
+  .code-box {
+    background: #1e1e2e; color: #cdd6f4;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.83rem; line-height: 1.55;
+    padding: 1.25rem 1.5rem; border-radius: 8px;
+    margin: 1rem 0; white-space: pre-wrap; overflow-x: auto;
+    position: relative;
+  }
+  .code-box .code-label {
+    position: absolute; top: -0.55rem; left: 1rem;
+    background: var(--text); color: #fff;
+    padding: 0.1rem 0.65rem; border-radius: 4px;
+    font-size: 0.7rem; font-weight: 700; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    letter-spacing: 0.03em;
+  }
+  .code-box .comment { color: #6c7086; }
+  .code-box .keyword { color: #cba6f7; }
+  .code-box .string { color: #a6e3a1; }
+  .code-box .function { color: #89b4fa; }
+  .code-box .ghost { color: #585b70; font-style: italic; }
+
+  .try-it {
+    background: var(--purple-subtle); border: 1px solid #d8b4fe;
+    border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;
+  }
+  .try-it h4 {
+    color: var(--purple); margin: 0 0 0.5rem; font-size: 0.95rem;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .try-it p, .try-it li { font-size: 0.88rem; margin: 0 0 0.5rem; }
+  .try-it ol, .try-it ul { margin: 0.25rem 0 0.5rem 1.2rem; }
+
+  .track-label {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.2rem 0.7rem; border-radius: 4px;
+    font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .track-infra { background: #dbeafe; color: #1e40af; }
+  .track-dev { background: #dcfce7; color: #166534; }
+  .track-both { background: var(--yellow-subtle); color: var(--yellow); }
+
+  .shortcut-key {
+    display: inline-block;
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.1rem 0.45rem;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text);
+    box-shadow: 0 1px 0 var(--border);
+  }
+
+  .exercise-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.3rem;
+  }
+  .exercise-num {
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.25rem 0.7rem;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .exercise-difficulty {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.15rem 0.55rem;
+    border-radius: 12px;
+  }
+  .difficulty-starter { background: var(--green-subtle); color: var(--green); }
+  .difficulty-intermediate { background: var(--yellow-subtle); color: var(--yellow); }
+  .difficulty-advanced { background: var(--orange-subtle); color: var(--orange); }
+
+  .file-path {
+    display: inline-block;
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.15rem 0.5rem;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.8rem;
+    color: var(--accent);
+  }
+
+  .checklist { list-style: none; margin: 0.75rem 0; padding: 0; }
+  .checklist li {
+    padding: 0.4rem 0;
+    padding-left: 1.6rem;
+    position: relative;
+    font-size: 0.9rem;
+  }
+  .checklist li::before {
+    content: '☐';
+    position: absolute;
+    left: 0;
+    font-size: 1.1rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ SIDEBAR ═══════════════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <h1>Copilot Lab Guide</h1>
+    <div class="meta">Connells Group &bull; Hands-On Exercises &bull; Use with workshop guide</div>
+  </div>
+  <ul class="nav-list">
+    <li class="nav-group-label">Getting Started</li>
+    <li><a class="nav-link active" data-page="intro"><span class="nav-num">1</span> Lab Introduction</a></li>
+    <li><a class="nav-link" data-page="lab-setup"><span class="nav-num">2</span> Clone &amp; Open the Repos</a></li>
+
+    <li class="nav-group-label">Infra Track Labs</li>
+    <li><a class="nav-link" data-page="lab-terraform"><span class="nav-num">3</span> Lab: Terraform Completion</a></li>
+    <li><a class="nav-link" data-page="lab-powershell"><span class="nav-num">4</span> Lab: PowerShell Bug Hunt</a></li>
+    <li><a class="nav-link" data-page="lab-pipelines"><span class="nav-num">5</span> Lab: Pipeline &amp; Docker</a></li>
+    <li><a class="nav-link" data-page="lab-bash"><span class="nav-num">6</span> Lab: Bash &rarr; PowerShell</a></li>
+
+    <li class="nav-group-label">Dev Track Labs</li>
+    <li><a class="nav-link" data-page="lab-model"><span class="nav-num">7</span> Lab: Model &amp; Endpoints</a></li>
+    <li><a class="nav-link" data-page="lab-bugs"><span class="nav-num">8</span> Lab: Find &amp; Fix Bugs</a></li>
+    <li><a class="nav-link" data-page="lab-refactor"><span class="nav-num">9</span> Lab: Refactor Messy Code</a></li>
+    <li><a class="nav-link" data-page="lab-tests"><span class="nav-num">10</span> Lab: Generate Tests</a></li>
+    <li><a class="nav-link" data-page="lab-sql"><span class="nav-num">11</span> Lab: SQL Queries</a></li>
+    <li><a class="nav-link" data-page="lab-legacy"><span class="nav-num">12</span> Lab: Legacy Conversion</a></li>
+    <li><a class="nav-link" data-page="lab-docs"><span class="nav-num">13</span> Lab: Documentation</a></li>
+
+    <li class="nav-group-label">Bonus</li>
+    <li><a class="nav-link" data-page="lab-agent"><span class="nav-num">14</span> Lab: Agent Mode Challenge</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
+<div class="main">
+
+  <!-- ═══════════════════════ 1 · INTRO ═══════════════════════ -->
+  <section id="intro" class="page active">
+    <h1>GitHub Copilot &mdash; Hands-On Lab Guide</h1>
+    <p class="page-subtitle">Practical exercises to accompany the GitHub Copilot Workshop &bull; Connells Group</p>
+
+    <div class="info-box blue">
+      <strong>How to use this guide.</strong> This lab guide contains step-by-step exercises. Each exercise tells you exactly which file to open, what to do with Copilot, and what the expected outcome looks like. Work through your track&rsquo;s exercises in order, or pick the ones that interest you most.
+    </div>
+
+    <h2>Lab Repos</h2>
+    <p>You&rsquo;ll need two repos. Your facilitator will share the GitHub URL &mdash; clone them before starting.</p>
+
+    <div class="two-col">
+      <div class="card">
+        <h3><span class="track-label track-infra">Infra Lab</span></h3>
+        <p>Terraform, PowerShell scripts, CI/CD pipelines, Dockerfiles, and runbook templates.</p>
+        <p><strong>Folder:</strong> <span class="file-path">infra-lab/</span></p>
+      </div>
+      <div class="card">
+        <h3><span class="track-label track-dev">Dev Lab</span></h3>
+        <p>C# / .NET 8 property management API. Models, services, controllers, SQL, legacy code, and tests.</p>
+        <p><strong>Folder:</strong> <span class="file-path">dev-lab/</span></p>
+      </div>
+    </div>
+
+    <h2>Difficulty Levels</h2>
+    <div class="card">
+      <ul>
+        <li><span class="exercise-difficulty difficulty-starter">Starter</span> &mdash; Follow the steps, let Copilot do most of the work. Great for your first exercises.</li>
+        <li><span class="exercise-difficulty difficulty-intermediate">Intermediate</span> &mdash; Requires some prompt crafting. You may need to guide Copilot with context.</li>
+        <li><span class="exercise-difficulty difficulty-advanced">Advanced</span> &mdash; Open-ended challenges. Multiple approaches, multiple files. Real-world complexity.</li>
+      </ul>
+    </div>
+
+    <h2>Copilot Quick Reference</h2>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>How to Trigger</th>
+          <th>Best For</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Completions</strong></td>
+          <td>Just start typing or write a comment</td>
+          <td>Filling in code, completing patterns</td>
+        </tr>
+        <tr>
+          <td><strong>Chat Panel</strong></td>
+          <td><span class="shortcut-key">Ctrl</span>+<span class="shortcut-key">Shift</span>+<span class="shortcut-key">I</span></td>
+          <td>Questions, explanations, generating blocks of code</td>
+        </tr>
+        <tr>
+          <td><strong>Inline Chat</strong></td>
+          <td><span class="shortcut-key">Ctrl</span>+<span class="shortcut-key">I</span></td>
+          <td>Quick edits in-place &mdash; refactor, fix, explain</td>
+        </tr>
+        <tr>
+          <td><strong>Agent Mode</strong></td>
+          <td>Chat panel &rarr; switch to Agent</td>
+          <td>Multi-file tasks, scaffolding, complex changes</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="page-nav">
+      <span class="page-nav-btn disabled">Start of Guide</span>
+      <a class="page-nav-btn" data-page="lab-setup">Clone &amp; Open the Repos &rarr;</a>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════ 2 · SETUP ═══════════════════════ -->
+  <section id="lab-setup" class="page">
+    <h1>Clone &amp; Open the Repos</h1>
+    <p class="page-subtitle">Get the lab repos into VS Code so you&rsquo;re ready for the exercises</p>
+
+    <h2>Step-by-Step</h2>
+    <ol class="step-list">
+      <li><span class="step-num">1</span><div>Open a terminal (<span class="shortcut-key">Ctrl</span>+<span class="shortcut-key">`</span>) in VS Code.</div></li>
+      <li><span class="step-num">2</span><div>Clone the lab repo (your facilitator will provide the URL):
+        <div class="code-box" style="margin-top:0.5rem"><span class="code-label">Terminal</span>git clone https://github.com/YOUR-ORG/github-copilot-labs.git
+cd github-copilot-labs</div>
+      </div></li>
+      <li><span class="step-num">3</span><div>Open the folder in VS Code: <strong>File &rarr; Open Folder</strong> and select <span class="file-path">github-copilot-labs</span>.</div></li>
+      <li><span class="step-num">4</span><div>Check Copilot is active &mdash; look for the Copilot icon in the bottom-right status bar. It should show a tick mark, not a warning.</div></li>
+      <li><span class="step-num">5</span><div>Navigate to your track&rsquo;s folder:
+        <ul>
+          <li><span class="track-label track-infra">Infra Track</span> &rarr; open <span class="file-path">infra-lab/</span></li>
+          <li><span class="track-label track-dev">Dev Track</span> &rarr; open <span class="file-path">dev-lab/</span></li>
+        </ul>
+      </div></li>
+    </ol>
+
+    <div class="info-box green">
+      <strong>No GitHub account yet?</strong> Sign up at <strong>github.com</strong> and activate Copilot Free from your profile settings &rarr; Copilot. It takes less than 2 minutes and gives you 2,000 completions + 50 chat messages per month.
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="intro">&larr; Lab Introduction</a>
+      <a class="page-nav-btn" data-page="lab-terraform">Lab: Terraform Completion &rarr;</a>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════ 3 · TERRAFORM ═══════════════════════ -->
+  <section id="lab-terraform" class="page">
+    <h1><span class="track-label track-infra">Infra Track</span> Terraform Completion</h1>
+    <p class="page-subtitle">Use Copilot completions and chat to finish a Terraform configuration</p>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 3.1</span>
+      <span class="exercise-difficulty difficulty-starter">Starter</span>
+    </div>
+    <div class="card">
+      <h3>Complete the Variables File</h3>
+      <ol>
+        <li>Open <span class="file-path">infra-lab/terraform/variables.tf</span></li>
+        <li>Place your cursor after the last variable block</li>
+        <li>Type <code>variable "data_subnet_prefix"</code> and press <span class="shortcut-key">Enter</span></li>
+        <li>Copilot should suggest the full variable block &mdash; press <span class="shortcut-key">Tab</span> to accept</li>
+        <li>Continue for <code>storage_account_tier</code>, <code>storage_replication_type</code>, and <code>common_tags</code></li>
+      </ol>
+      <p><strong>Expected outcome:</strong> 4 new variable blocks with sensible defaults and descriptions, matching the TODO comments.</p>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 3.2</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Complete main.tf with Missing Resources</h3>
+      <ol>
+        <li>Open <span class="file-path">infra-lab/terraform/main.tf</span></li>
+        <li>Read through the existing resources (resource group, VNet, web subnet, web NSG)</li>
+        <li>Place your cursor at the <code># TODO: Add data subnet</code> comment</li>
+        <li>Use Copilot completions or inline chat (<span class="shortcut-key">Ctrl</span>+<span class="shortcut-key">I</span>) to generate each missing resource</li>
+        <li>Complete all the TODOs: data subnet, data NSG, storage account, and key vault</li>
+      </ol>
+      <div class="prompt-box"><span class="prompt-label">Inline Chat Prompt</span>Add an azurerm_subnet for the data tier using the data_subnet_prefix variable, associated with the existing VNet</div>
+      <p><strong>Expected outcome:</strong> 4 additional resources that reference existing variables and follow the same naming conventions.</p>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 3.3</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Build the Networking Module</h3>
+      <ol>
+        <li>Open <span class="file-path">infra-lab/terraform/modules/networking/main.tf</span></li>
+        <li>Read the comments describing what the module should contain</li>
+        <li>Open Copilot Chat (<span class="shortcut-key">Ctrl</span>+<span class="shortcut-key">Shift</span>+<span class="shortcut-key">I</span>) and try:</li>
+      </ol>
+      <div class="prompt-box"><span class="prompt-label">Chat Prompt</span>Based on the comments in this file, generate the full Terraform networking module with variables, the VNet resource, two subnets, two NSGs, and outputs</div>
+      <p><strong>Expected outcome:</strong> A complete module with <code>variables.tf</code>, <code>main.tf</code>, and <code>outputs.tf</code> content.</p>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 3.4</span>
+      <span class="exercise-difficulty difficulty-starter">Starter</span>
+    </div>
+    <div class="card">
+      <h3>Generate Outputs</h3>
+      <ol>
+        <li>Open <span class="file-path">infra-lab/terraform/outputs.tf</span></li>
+        <li>Type <code>output "resource_group_name"</code> and let Copilot complete it</li>
+        <li>Continue accepting suggestions &mdash; Copilot should generate outputs for all resources in <code>main.tf</code></li>
+      </ol>
+      <p><strong>Expected outcome:</strong> Output blocks for resource group name, VNet ID, subnet IDs, storage account name, and Key Vault URI.</p>
+    </div>
+
+    <ul class="checklist">
+      <li>Completed variables.tf</li>
+      <li>Completed main.tf with all resources</li>
+      <li>Built the networking module</li>
+      <li>Generated outputs.tf</li>
+    </ul>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="lab-setup">&larr; Setup</a>
+      <a class="page-nav-btn" data-page="lab-powershell">Lab: PowerShell Bug Hunt &rarr;</a>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════ 4 · POWERSHELL BUG HUNT ═══════════════════════ -->
+  <section id="lab-powershell" class="page">
+    <h1><span class="track-label track-infra">Infra Track</span> PowerShell Bug Hunt</h1>
+    <p class="page-subtitle">Use Copilot to find and fix 4 deliberate bugs in a health-check script</p>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 4.1</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Find the Bugs</h3>
+      <ol>
+        <li>Open <span class="file-path">infra-lab/scripts/healthcheck.ps1</span></li>
+        <li>Select all the code (<span class="shortcut-key">Ctrl</span>+<span class="shortcut-key">A</span>)</li>
+        <li>Open inline chat (<span class="shortcut-key">Ctrl</span>+<span class="shortcut-key">I</span>) and ask:</li>
+      </ol>
+      <div class="prompt-box"><span class="prompt-label">Inline Chat Prompt</span>Review this script for bugs. List each bug with the line number and explain what's wrong.</div>
+      <p><strong>There are 4 bugs hidden in this script:</strong></p>
+      <table class="compare-table">
+        <thead>
+          <tr><th>#</th><th>Area</th><th>Hint</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>CPU check</td><td>What type should the value be?</td></tr>
+          <tr><td>2</td><td>Memory check</td><td>Is it calculating free or used?</td></tr>
+          <tr><td>3</td><td>Disk check</td><td>Look at the property name in Where-Object</td></tr>
+          <tr><td>4</td><td>Process check</td><td>Check the working set property name</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 4.2</span>
+      <span class="exercise-difficulty difficulty-starter">Starter</span>
+    </div>
+    <div class="card">
+      <h3>Fix the Bugs with Copilot</h3>
+      <ol>
+        <li>For each bug, select the problematic line(s)</li>
+        <li>Press <span class="shortcut-key">Ctrl</span>+<span class="shortcut-key">I</span> and ask Copilot to fix it</li>
+        <li>Review the suggested fix before accepting</li>
+      </ol>
+      <div class="info-box yellow">
+        <strong>Tip:</strong> Try the <code>/fix</code> slash command in chat &mdash; it&rsquo;s designed specifically for bug fixing.
+      </div>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 4.3</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Extend the Disk Cleanup Script</h3>
+      <ol>
+        <li>Open <span class="file-path">infra-lab/scripts/disk-cleanup.ps1</span></li>
+        <li>Work through the TODO comments, placing your cursor on each and letting Copilot complete</li>
+        <li>Add log rotation and temp file cleanup using Copilot suggestions</li>
+      </ol>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 4.4</span>
+      <span class="exercise-difficulty difficulty-advanced">Advanced</span>
+    </div>
+    <div class="card">
+      <h3>Build the Stale Users Script</h3>
+      <ol>
+        <li>Open <span class="file-path">infra-lab/scripts/stale-users.ps1</span></li>
+        <li>This file has a skeleton with parameters but no logic</li>
+        <li>Ask Copilot Chat to implement the full script:</li>
+      </ol>
+      <div class="prompt-box"><span class="prompt-label">Chat Prompt</span>Implement this PowerShell script to find Azure AD users who haven't signed in for the specified number of days using Microsoft Graph API. Include error handling and a CSV export option.</div>
+    </div>
+
+    <ul class="checklist">
+      <li>Found all 4 bugs in healthcheck.ps1</li>
+      <li>Fixed the bugs with Copilot</li>
+      <li>Extended disk-cleanup.ps1</li>
+      <li>Built stale-users.ps1 from the skeleton</li>
+    </ul>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="lab-terraform">&larr; Terraform Completion</a>
+      <a class="page-nav-btn" data-page="lab-pipelines">Lab: Pipeline &amp; Docker &rarr;</a>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════ 5 · PIPELINES & DOCKER ═══════════════════════ -->
+  <section id="lab-pipelines" class="page">
+    <h1><span class="track-label track-infra">Infra Track</span> Pipeline &amp; Docker</h1>
+    <p class="page-subtitle">Complete a CI/CD pipeline and fix a Dockerfile using Copilot</p>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 5.1</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Complete the Azure DevOps Pipeline</h3>
+      <ol>
+        <li>Open <span class="file-path">infra-lab/pipelines/azure-pipelines.yml</span></li>
+        <li>Read the existing structure (build stage is partially done)</li>
+        <li>Place your cursor at each TODO comment and let Copilot complete the steps</li>
+        <li>Complete: test step, publish step, staging stage, and production stage with approval gate</li>
+      </ol>
+      <div class="prompt-box"><span class="prompt-label">Inline Chat Prompt</span>Add a staging deployment stage that deploys to an Azure App Service using the AzureWebApp@1 task, with a slot swap strategy</div>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 5.2</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Fix the Dockerfile</h3>
+      <ol>
+        <li>Open <span class="file-path">infra-lab/pipelines/Dockerfile</span></li>
+        <li>This Dockerfile has several issues &mdash; ask Copilot to review it:</li>
+      </ol>
+      <div class="prompt-box"><span class="prompt-label">Chat Prompt</span>Review this Dockerfile for security issues, performance problems, and best practice violations. Fix all the issues you find.</div>
+      <p><strong>Issues to find:</strong> no multi-stage build, runs as root, wrong EXPOSE port, no healthcheck, no .dockerignore referenced.</p>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 5.3</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Complete the Docker Compose</h3>
+      <ol>
+        <li>Open <span class="file-path">infra-lab/pipelines/docker-compose.yml</span></li>
+        <li>The web-api service is partially defined</li>
+        <li>Use Copilot to add the SQL Server service, Redis cache, networks, and volumes as described in the TODOs</li>
+      </ol>
+    </div>
+
+    <ul class="checklist">
+      <li>Completed the pipeline YAML</li>
+      <li>Fixed all Dockerfile issues</li>
+      <li>Completed docker-compose.yml</li>
+    </ul>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="lab-powershell">&larr; PowerShell Bug Hunt</a>
+      <a class="page-nav-btn" data-page="lab-bash">Lab: Bash &rarr; PowerShell &rarr;</a>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════ 6 · BASH → POWERSHELL ═══════════════════════ -->
+  <section id="lab-bash" class="page">
+    <h1><span class="track-label track-infra">Infra Track</span> Bash &rarr; PowerShell</h1>
+    <p class="page-subtitle">Convert a Bash deployment script to PowerShell using Copilot</p>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 6.1</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Convert the Deploy Script</h3>
+      <ol>
+        <li>Open <span class="file-path">infra-lab/scripts/deploy.sh</span></li>
+        <li>Select all the code</li>
+        <li>Open Copilot Chat and ask:</li>
+      </ol>
+      <div class="prompt-box"><span class="prompt-label">Chat Prompt</span>Convert this Bash deployment script to idiomatic PowerShell. Use proper PowerShell cmdlets instead of just wrapping Bash commands. Add proper error handling with try/catch.</div>
+      <ol start="4">
+        <li>Create a new file <span class="file-path">infra-lab/scripts/deploy.ps1</span> and paste the result</li>
+        <li>Review the conversion &mdash; check that <code>az</code> CLI commands are preserved but shell constructs are PowerShell-native</li>
+      </ol>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 6.2</span>
+      <span class="exercise-difficulty difficulty-advanced">Advanced</span>
+    </div>
+    <div class="card">
+      <h3>Generate the Runbook</h3>
+      <ol>
+        <li>Open <span class="file-path">infra-lab/docs/runbook-template.md</span></li>
+        <li>Use Copilot Chat with the deploy script as context:</li>
+      </ol>
+      <div class="prompt-box"><span class="prompt-label">Chat Prompt</span>#file:deploy.sh Generate a complete operational runbook for this deployment process. Fill in all the empty sections with realistic content including pre-deployment checks, rollback steps, and monitoring verification.</div>
+    </div>
+
+    <ul class="checklist">
+      <li>Converted deploy.sh to deploy.ps1</li>
+      <li>Completed the runbook template</li>
+    </ul>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="lab-pipelines">&larr; Pipeline &amp; Docker</a>
+      <a class="page-nav-btn" data-page="lab-model">Lab: Model &amp; Endpoints &rarr;</a>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════ 7 · MODEL & ENDPOINTS ═══════════════════════ -->
+  <section id="lab-model" class="page">
+    <h1><span class="track-label track-dev">Dev Track</span> Model &amp; Endpoints</h1>
+    <p class="page-subtitle">Use Copilot to extend models and complete API endpoints</p>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 7.1</span>
+      <span class="exercise-difficulty difficulty-starter">Starter</span>
+    </div>
+    <div class="card">
+      <h3>Add Model Methods</h3>
+      <ol>
+        <li>Open <span class="file-path">dev-lab/src/Models/Property.cs</span></li>
+        <li>Find the first TODO comment &mdash; place your cursor on the blank line after it</li>
+        <li>Type <code>public decimal</code> and let Copilot suggest the PricePerSquareFoot method</li>
+        <li>Do the same for the formatted listing summary method</li>
+      </ol>
+      <p><strong>Expected outcome:</strong> Two methods that use the model&rsquo;s properties to compute and format results.</p>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 7.2</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Create the Valuation and Viewing Models</h3>
+      <ol>
+        <li>Still in <span class="file-path">Property.cs</span>, find the TODO for the Valuation model</li>
+        <li>Place your cursor below it and type <code>public class Valuation</code></li>
+        <li>Let Copilot generate the entire class based on the TODO comment&rsquo;s description</li>
+        <li>Repeat for the Viewing model</li>
+      </ol>
+      <div class="info-box yellow">
+        <strong>Tip:</strong> Copilot reads comments as context. The more specific the TODO comment, the better the generated code matches your intent.
+      </div>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 7.3</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Complete the API Controller</h3>
+      <ol>
+        <li>Open <span class="file-path">dev-lab/src/Controllers/PropertyController.cs</span></li>
+        <li>The GET all and GET by ID endpoints are done; the rest are stubs</li>
+        <li>Place your cursor after the POST TODO comment and start typing the endpoint</li>
+        <li>Complete POST, PUT, DELETE, search, and stats endpoints</li>
+      </ol>
+      <div class="prompt-box"><span class="prompt-label">Inline Chat Prompt</span>Implement the POST endpoint that validates the property, adds it via the service, and returns 201 Created with the location header</div>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 7.4</span>
+      <span class="exercise-difficulty difficulty-starter">Starter</span>
+    </div>
+    <div class="card">
+      <h3>Wire Up Program.cs</h3>
+      <ol>
+        <li>Open <span class="file-path">dev-lab/src/Program.cs</span></li>
+        <li>Find the TODO to register endpoints</li>
+        <li>Type <code>app.</code> and let Copilot suggest <code>MapPropertyEndpoints()</code></li>
+      </ol>
+    </div>
+
+    <ul class="checklist">
+      <li>Added PricePerSquareFoot and summary methods</li>
+      <li>Created Valuation and Viewing models</li>
+      <li>Completed all controller endpoints</li>
+      <li>Wired up Program.cs</li>
+    </ul>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="lab-bash">&larr; Bash &rarr; PowerShell</a>
+      <a class="page-nav-btn" data-page="lab-bugs">Lab: Find &amp; Fix Bugs &rarr;</a>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════ 8 · FIND & FIX BUGS ═══════════════════════ -->
+  <section id="lab-bugs" class="page">
+    <h1><span class="track-label track-dev">Dev Track</span> Find &amp; Fix Bugs</h1>
+    <p class="page-subtitle">Use Copilot to identify and fix bugs in the property service</p>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 8.1</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Review PropertyService for Bugs</h3>
+      <ol>
+        <li>Open <span class="file-path">dev-lab/src/Services/PropertyService.cs</span></li>
+        <li>Select the entire file and ask Copilot Chat:</li>
+      </ol>
+      <div class="prompt-box"><span class="prompt-label">Chat Prompt</span>Review this service class for bugs, potential exceptions, and design issues. For each issue, explain the problem and suggest a fix.</div>
+      <p><strong>Bugs to find:</strong></p>
+      <table class="compare-table">
+        <thead>
+          <tr><th>#</th><th>Method</th><th>Issue</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td><code>GetById</code></td><td>Uses <code>First()</code> instead of <code>FirstOrDefault()</code> &mdash; throws on missing ID</td></tr>
+          <tr><td>2</td><td><code>Add</code></td><td>ID generation uses <code>Count + 1</code> &mdash; broken after deletions</td></tr>
+          <tr><td>3</td><td><code>Add</code></td><td>Uses <code>DateTime.Now</code> instead of <code>DateTime.UtcNow</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 8.2</span>
+      <span class="exercise-difficulty difficulty-starter">Starter</span>
+    </div>
+    <div class="card">
+      <h3>Fix the Bugs</h3>
+      <ol>
+        <li>For each bug, select the problematic line</li>
+        <li>Use inline chat (<span class="shortcut-key">Ctrl</span>+<span class="shortcut-key">I</span>) with <code>/fix</code></li>
+        <li>Review and accept the fix</li>
+      </ol>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 8.3</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Fix the Controller Bug</h3>
+      <ol>
+        <li>Open <span class="file-path">dev-lab/src/Controllers/PropertyController.cs</span></li>
+        <li>Look at the GET by ID endpoint &mdash; it returns 200 even when the property is null</li>
+        <li>Use inline chat to fix it to return 404 when not found</li>
+      </ol>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 8.4</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Fix the Valuation Service Bug</h3>
+      <ol>
+        <li>Open <span class="file-path">dev-lab/src/Services/ValuationService.cs</span></li>
+        <li>The <code>CalculateValuation</code> method crashes when <code>YearBuilt</code> is null</li>
+        <li>Ask Copilot to find and fix this null reference issue</li>
+      </ol>
+    </div>
+
+    <ul class="checklist">
+      <li>Found all 3 PropertyService bugs</li>
+      <li>Fixed all bugs</li>
+      <li>Fixed the controller 404 bug</li>
+      <li>Fixed the YearBuilt null reference</li>
+    </ul>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="lab-model">&larr; Model &amp; Endpoints</a>
+      <a class="page-nav-btn" data-page="lab-refactor">Lab: Refactor Messy Code &rarr;</a>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════ 9 · REFACTOR ═══════════════════════ -->
+  <section id="lab-refactor" class="page">
+    <h1><span class="track-label track-dev">Dev Track</span> Refactor Messy Code</h1>
+    <p class="page-subtitle">Transform the messy ValuationService into clean, maintainable code</p>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 9.1</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Replace If/Else Chains with Dictionary Lookups</h3>
+      <ol>
+        <li>Open <span class="file-path">dev-lab/src/Services/ValuationService.cs</span></li>
+        <li>Select the base-price if/else block (lines with PropertyType comparisons)</li>
+        <li>Use inline chat:</li>
+      </ol>
+      <div class="prompt-box"><span class="prompt-label">Inline Chat Prompt</span>Refactor this if/else chain into a Dictionary&lt;PropertyType, decimal&gt; lookup</div>
+      <ol start="4">
+        <li>Do the same for the EPC rating block &mdash; try a <strong>switch expression</strong> this time:</li>
+      </ol>
+      <div class="prompt-box"><span class="prompt-label">Inline Chat Prompt</span>Refactor this if/else chain into a C# switch expression</div>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 9.2</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Extract Magic Numbers</h3>
+      <ol>
+        <li>Select the entire <code>CalculateValuation</code> method</li>
+        <li>Ask Copilot Chat:</li>
+      </ol>
+      <div class="prompt-box"><span class="prompt-label">Chat Prompt</span>Extract all the magic numbers in this method into well-named constants in a ValuationConfig class. Group them logically (bedroom premium, bathroom premium, garden premium, etc.)</div>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 9.3</span>
+      <span class="exercise-difficulty difficulty-advanced">Advanced</span>
+    </div>
+    <div class="card">
+      <h3>Full Refactor with Agent Mode</h3>
+      <ol>
+        <li>Open Copilot Chat and switch to <strong>Agent</strong> mode</li>
+        <li>Give it a comprehensive refactoring task:</li>
+      </ol>
+      <div class="prompt-box"><span class="prompt-label">Agent Mode Prompt</span>Refactor ValuationService.cs completely:
+1. Extract all magic numbers into a ValuationConfig class
+2. Replace if/else chains with dictionaries or switch expressions
+3. Add null safety for YearBuilt
+4. Add a CompareToMarket method
+5. Add XML documentation
+Don't change the public API — same method signature.</div>
+      <p><strong>Watch how Agent mode:</strong> plans the changes, modifies the file, possibly creates new files, and keeps the public API intact.</p>
+    </div>
+
+    <ul class="checklist">
+      <li>Replaced if/else with dictionary lookup</li>
+      <li>Used switch expression for EPC rating</li>
+      <li>Extracted magic numbers to config class</li>
+      <li>Completed full Agent Mode refactor</li>
+    </ul>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="lab-bugs">&larr; Find &amp; Fix Bugs</a>
+      <a class="page-nav-btn" data-page="lab-tests">Lab: Generate Tests &rarr;</a>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════ 10 · TESTS ═══════════════════════ -->
+  <section id="lab-tests" class="page">
+    <h1><span class="track-label track-dev">Dev Track</span> Generate Tests</h1>
+    <p class="page-subtitle">Use Copilot to generate a comprehensive test suite from scratch</p>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 10.1</span>
+      <span class="exercise-difficulty difficulty-starter">Starter</span>
+    </div>
+    <div class="card">
+      <h3>Generate Tests with /tests</h3>
+      <ol>
+        <li>Open <span class="file-path">dev-lab/src/Services/PropertyService.cs</span></li>
+        <li>Select the entire class</li>
+        <li>Open Copilot Chat and type: <code>/tests Generate unit tests for this class using xUnit</code></li>
+        <li>Copy the generated tests into <span class="file-path">dev-lab/tests/PropertyServiceTests.cs</span></li>
+      </ol>
+      <p><strong>Expected outcome:</strong> Tests for GetAll, GetById (valid &amp; invalid), Add, Update, and Delete.</p>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 10.2</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Generate Edge Case Tests</h3>
+      <ol>
+        <li>Open the generated tests file</li>
+        <li>Ask Copilot for edge cases:</li>
+      </ol>
+      <div class="prompt-box"><span class="prompt-label">Chat Prompt</span>Add edge case tests for PropertyService:
+- GetById with ID -1
+- GetById with ID 9999
+- Add two properties then delete the first, then add another (tests ID uniqueness)
+- Update a property that was already deleted
+- Delete the same property twice</div>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 10.3</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Test the ValuationService</h3>
+      <ol>
+        <li>Open <span class="file-path">dev-lab/src/Services/ValuationService.cs</span></li>
+        <li>Ask Copilot to generate tests, specifically covering:</li>
+        <li>The null YearBuilt crash (before you fixed it &mdash; or verify your fix works)</li>
+        <li>Each property type producing different base prices</li>
+        <li>EPC rating multipliers</li>
+      </ol>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 10.4</span>
+      <span class="exercise-difficulty difficulty-starter">Starter</span>
+    </div>
+    <div class="card">
+      <h3>Let Copilot Complete Tests Line-by-Line</h3>
+      <ol>
+        <li>Open the test file and place your cursor at the end</li>
+        <li>Type a comment: <code>// Test that search returns only properties in Reading</code></li>
+        <li>Press Enter and let Copilot auto-complete the entire test method</li>
+        <li>Try writing 3&ndash;4 more test descriptions as comments and let Copilot implement them</li>
+      </ol>
+    </div>
+
+    <ul class="checklist">
+      <li>Generated base test suite with /tests</li>
+      <li>Added edge case tests</li>
+      <li>Generated ValuationService tests</li>
+      <li>Used comment-driven test generation</li>
+    </ul>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="lab-refactor">&larr; Refactor Messy Code</a>
+      <a class="page-nav-btn" data-page="lab-sql">Lab: SQL Queries &rarr;</a>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════ 11 · SQL ═══════════════════════ -->
+  <section id="lab-sql" class="page">
+    <h1><span class="track-label track-dev">Dev Track</span> SQL Queries</h1>
+    <p class="page-subtitle">Write and optimise SQL queries using Copilot with the schema as context</p>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 11.1</span>
+      <span class="exercise-difficulty difficulty-starter">Starter</span>
+    </div>
+    <div class="card">
+      <h3>Complete the Query Stubs</h3>
+      <ol>
+        <li>Open <span class="file-path">dev-lab/sql/schema.sql</span> first &mdash; read it so Copilot has schema context</li>
+        <li>Then open <span class="file-path">dev-lab/sql/queries.sql</span></li>
+        <li>Place your cursor after each TODO comment and let Copilot auto-complete the query</li>
+        <li>Start with query #1 (the simplest) and work through to #8</li>
+      </ol>
+      <div class="info-box blue">
+        <strong>Trick:</strong> Keep <code>schema.sql</code> open in another tab. Copilot uses open files as context to write correct column names and joins.
+      </div>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 11.2</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Extend the Schema</h3>
+      <ol>
+        <li>Open <span class="file-path">dev-lab/sql/schema.sql</span></li>
+        <li>Use Copilot to create the Valuations, Viewings, and Agents tables from the TODOs</li>
+        <li>Then ask Copilot to add indexes, check constraints, and audit columns</li>
+      </ol>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 11.3</span>
+      <span class="exercise-difficulty difficulty-advanced">Advanced</span>
+    </div>
+    <div class="card">
+      <h3>Convert Query to Stored Procedure</h3>
+      <ol>
+        <li>Pick the most complex query you generated</li>
+        <li>Ask Copilot to convert it to a stored procedure with parameters</li>
+        <li>Ask for input validation and proper error handling</li>
+      </ol>
+    </div>
+
+    <ul class="checklist">
+      <li>Completed query stubs 1&ndash;8</li>
+      <li>Extended schema with new tables</li>
+      <li>Created a stored procedure</li>
+    </ul>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="lab-tests">&larr; Generate Tests</a>
+      <a class="page-nav-btn" data-page="lab-legacy">Lab: Legacy Conversion &rarr;</a>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════ 12 · LEGACY CONVERSION ═══════════════════════ -->
+  <section id="lab-legacy" class="page">
+    <h1><span class="track-label track-dev">Dev Track</span> Legacy Conversion</h1>
+    <p class="page-subtitle">Convert legacy JavaScript and VB.NET code to modern C# using Copilot</p>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 12.1</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Convert Stamp Duty Calculator (JS &rarr; C#)</h3>
+      <ol>
+        <li>Open <span class="file-path">dev-lab/legacy/old-calculator.js</span></li>
+        <li>Select all the code and ask Copilot Chat:</li>
+      </ol>
+      <div class="prompt-box"><span class="prompt-label">Chat Prompt</span>Convert this JavaScript stamp duty calculator to a clean C# class. Use records for the result type, make it a proper service with xmldoc comments, and use decimal for money.</div>
+      <ol start="3">
+        <li>Review the output &mdash; check that the tax bands and logic are preserved</li>
+        <li>Create a new file <span class="file-path">dev-lab/src/Services/StampDutyService.cs</span> and paste the result</li>
+      </ol>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 12.2</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Convert VB.NET Export Utility (VB &rarr; C#)</h3>
+      <ol>
+        <li>Open <span class="file-path">dev-lab/legacy/data-export.vb</span></li>
+        <li>Ask Copilot to convert it:</li>
+      </ol>
+      <div class="prompt-box"><span class="prompt-label">Chat Prompt</span>Convert this VB.NET code to modern C# (.NET 8). Use async/await, proper IDisposable patterns, StringBuilder for CSV building, and replace SqlConnection with your DbContext or Dapper pattern.</div>
+      <ol start="3">
+        <li>Review: Does it handle the connection properly? Is the CSV building done safely?</li>
+      </ol>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 12.3</span>
+      <span class="exercise-difficulty difficulty-advanced">Advanced</span>
+    </div>
+    <div class="card">
+      <h3>Generate Tests for the Converted Code</h3>
+      <ol>
+        <li>Take your converted StampDutyService from Exercise 12.1</li>
+        <li>Ask Copilot to generate tests that verify the same results as the original JS console.log examples</li>
+        <li>The original outputs are your expected values &mdash; this is a great way to verify conversions</li>
+      </ol>
+    </div>
+
+    <ul class="checklist">
+      <li>Converted JS calculator to C#</li>
+      <li>Converted VB.NET export to modern C#</li>
+      <li>Generated verification tests</li>
+    </ul>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="lab-sql">&larr; SQL Queries</a>
+      <a class="page-nav-btn" data-page="lab-docs">Lab: Documentation &rarr;</a>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════ 13 · DOCUMENTATION ═══════════════════════ -->
+  <section id="lab-docs" class="page">
+    <h1><span class="track-label track-dev">Dev Track</span> Documentation</h1>
+    <p class="page-subtitle">Generate API docs, code comments, and markdown documentation with Copilot</p>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 13.1</span>
+      <span class="exercise-difficulty difficulty-starter">Starter</span>
+    </div>
+    <div class="card">
+      <h3>Generate API Documentation</h3>
+      <ol>
+        <li>Open <span class="file-path">dev-lab/docs/api-spec.md</span></li>
+        <li>Open <span class="file-path">dev-lab/src/Controllers/PropertyController.cs</span> in another tab</li>
+        <li>In Copilot Chat, reference both files:</li>
+      </ol>
+      <div class="prompt-box"><span class="prompt-label">Chat Prompt</span>#file:PropertyController.cs #file:Property.cs
+Generate complete API documentation for api-spec.md. Include all endpoints with method, path, description, request/response examples, and error codes.</div>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 13.2</span>
+      <span class="exercise-difficulty difficulty-starter">Starter</span>
+    </div>
+    <div class="card">
+      <h3>Add XML Doc Comments</h3>
+      <ol>
+        <li>Open any C# file (e.g., <span class="file-path">dev-lab/src/Services/PropertyService.cs</span>)</li>
+        <li>Place your cursor above a method and type <code>///</code></li>
+        <li>Copilot should suggest a full XML doc comment &mdash; accept it</li>
+        <li>Do this for every public method in the file</li>
+      </ol>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 13.3</span>
+      <span class="exercise-difficulty difficulty-intermediate">Intermediate</span>
+    </div>
+    <div class="card">
+      <h3>Generate a PR Description</h3>
+      <ol>
+        <li>Imagine you&rsquo;ve completed all the exercises and want to submit a pull request</li>
+        <li>Ask Copilot Chat:</li>
+      </ol>
+      <div class="prompt-box"><span class="prompt-label">Chat Prompt</span>Generate a pull request description for the work done on the Connells Property API. Include: summary of changes, list of new/modified files, testing notes, and any breaking changes. Use conventional commit style.</div>
+    </div>
+
+    <ul class="checklist">
+      <li>Generated API spec from controller code</li>
+      <li>Added XML doc comments to a service</li>
+      <li>Generated a PR description</li>
+    </ul>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="lab-legacy">&larr; Legacy Conversion</a>
+      <a class="page-nav-btn" data-page="lab-agent">Lab: Agent Mode Challenge &rarr;</a>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════ 14 · AGENT MODE CHALLENGE ═══════════════════════ -->
+  <section id="lab-agent" class="page">
+    <h1><span class="track-label track-both">Both Tracks</span> Agent Mode Challenge</h1>
+    <p class="page-subtitle">A capstone exercise using Copilot Agent Mode for a multi-file task</p>
+
+    <div class="info-box purple">
+      <strong>What is Agent Mode?</strong> Agent Mode can plan and execute multi-step tasks across multiple files. It reads your codebase, proposes a plan, creates/edits files, and runs terminal commands &mdash; all from a single prompt. It&rsquo;s like pair-programming with an AI colleague who can actually type.
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Challenge A</span>
+      <span class="track-label track-infra">Infra Track</span>
+      <span class="exercise-difficulty difficulty-advanced">Advanced</span>
+    </div>
+    <div class="card">
+      <h3>Build a Monitoring Dashboard Config</h3>
+      <p>Open Copilot Chat, switch to Agent mode, and give this prompt:</p>
+      <div class="prompt-box"><span class="prompt-label">Agent Mode Prompt</span>Using the infra-lab repo as context, create:
+1. A Terraform module for Azure Monitor alerts (CPU > 80%, memory > 90%, disk > 85%)
+2. An Azure Dashboard definition (JSON) showing the health check metrics
+3. An alert action group that sends email to the ops team
+4. Update the main.tf to reference the new monitoring module
+Put the module in infra-lab/terraform/modules/monitoring/</div>
+      <p>Watch Agent Mode plan, create the module directory, write the Terraform files, and update existing config.</p>
+    </div>
+
+    <div class="exercise-header">
+      <span class="exercise-num">Challenge B</span>
+      <span class="track-label track-dev">Dev Track</span>
+      <span class="exercise-difficulty difficulty-advanced">Advanced</span>
+    </div>
+    <div class="card">
+      <h3>Implement Search &amp; Statistics</h3>
+      <p>Open Copilot Chat, switch to Agent mode, and give this prompt:</p>
+      <div class="prompt-box"><span class="prompt-label">Agent Mode Prompt</span>Using the dev-lab repo as context:
+1. Add Search and GetStatistics methods to IPropertyService
+2. Implement them in PropertyService with LINQ queries
+3. Add the search and stats endpoints to PropertyController
+4. Wire up the endpoints in Program.cs
+5. Generate xUnit tests for both new features
+Keep the existing code style and patterns.</div>
+      <p>Watch Agent Mode trace through the interface, service, controller, and tests to implement the full feature.</p>
+    </div>
+
+    <div class="info-box green">
+      <strong>What to observe:</strong> Notice how Agent Mode reads existing files to match patterns, proposes a plan before acting, edits multiple files in sequence, and occasionally runs commands. This is the workflow that saves the most time on real-world feature work.
+    </div>
+
+    <ul class="checklist">
+      <li>Completed your track&rsquo;s Agent Mode challenge</li>
+      <li>Tried the other track&rsquo;s challenge (bonus!)</li>
+    </ul>
+
+    <div class="info-box blue" style="margin-top: 2rem;">
+      <strong>That&rsquo;s it!</strong> You&rsquo;ve completed the GitHub Copilot lab exercises. Head back to the <strong>workshop guide</strong> for tips, best practices, and next steps. Don&rsquo;t forget to keep Copilot active &mdash; the free tier gives you 2,000 completions and 50 chat messages every month.
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="lab-docs">&larr; Documentation</a>
+      <span class="page-nav-btn disabled">End of Lab Guide</span>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══════════════════════ SCRIPT ═══════════════════════ -->
+<script>
+(function(){
+  const links = document.querySelectorAll('.nav-link, .page-nav-btn[data-page]');
+  const pages = document.querySelectorAll('.page');
+  const navLinks = document.querySelectorAll('.nav-link');
+  function goTo(id){
+    pages.forEach(p => p.classList.remove('active'));
+    navLinks.forEach(l => l.classList.remove('active'));
+    const page = document.getElementById(id);
+    if(page) page.classList.add('active');
+    const nav = document.querySelector(`.nav-link[data-page="${id}"]`);
+    if(nav) nav.classList.add('active');
+    window.scrollTo({top:0});
+    document.querySelector('.main').scrollTo({top:0});
+  }
+  links.forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const id = link.getAttribute('data-page');
+      if(id) goTo(id);
+    });
+  });
+})();
+</script>
+</body>
+</html>

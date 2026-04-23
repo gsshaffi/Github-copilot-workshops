@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connells &mdash; GitHub Copilot Interactive Workshop</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f6f8fa;
+    --surface-raised: #eef1f5;
+    --border: #d1d9e0;
+    --text: #1f2328;
+    --text-muted: #636c76;
+    --accent: #0969da;
+    --accent-subtle: #ddf4ff;
+    --green: #1a7f37;
+    --green-subtle: #dafbe1;
+    --yellow: #9a6700;
+    --yellow-subtle: #fff8c5;
+    --red: #cf222e;
+    --red-subtle: #ffebe9;
+    --purple: #8250df;
+    --purple-subtle: #fbefff;
+    --cyan: #0550ae;
+    --orange: #bc4c00;
+    --orange-subtle: #fff1e5;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 310px;
+    min-width: 310px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 1.5rem 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    overflow-y: auto;
+    z-index: 100;
+  }
+
+  .sidebar-header {
+    padding: 0 1.25rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.75rem;
+  }
+
+  .sidebar-header h1 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .sidebar-header .meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.35rem;
+  }
+
+  .nav-list { list-style: none; padding: 0; }
+  .nav-list li { margin: 0; }
+
+  .nav-group-label {
+    padding: 0.75rem 1.25rem 0.25rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 1.25rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+
+  .nav-link:hover { background: var(--surface-raised); color: var(--text); }
+
+  .nav-link.active {
+    background: var(--accent-subtle);
+    color: var(--accent);
+    border-left-color: var(--accent);
+    font-weight: 600;
+  }
+
+  .nav-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--surface-raised); color: var(--text-muted);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; font-weight: 700; flex-shrink: 0;
+  }
+
+  .nav-link.active .nav-num { background: var(--accent); color: #fff; }
+
+  .main {
+    margin-left: 310px;
+    flex: 1;
+    max-width: 980px;
+    padding: 2.5rem 3rem;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .page-title {
+    font-size: 1.7rem; font-weight: 700; margin-bottom: 0.4rem;
+    color: var(--text); display: flex; align-items: center; gap: 0.6rem;
+  }
+
+  .page-subtitle {
+    color: var(--text-muted); font-size: 0.95rem;
+    margin-bottom: 2rem; padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;
+  }
+  .card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .card p, .card li { font-size: 0.92rem; color: var(--text); line-height: 1.65; }
+  .card ul, .card ol { margin: 0.5rem 0 0 1.2rem; }
+  .card ul li, .card ol li { margin-bottom: 0.3rem; }
+
+  .info-box {
+    padding: 1rem 1.25rem; border-radius: 8px;
+    margin-bottom: 1.25rem; font-size: 0.92rem; line-height: 1.6;
+  }
+  .info-box.blue { background: var(--accent-subtle); border-left: 4px solid var(--accent); }
+  .info-box.green { background: var(--green-subtle); border-left: 4px solid var(--green); }
+  .info-box.yellow { background: var(--yellow-subtle); border-left: 4px solid var(--yellow); }
+  .info-box.orange { background: var(--orange-subtle); border-left: 4px solid var(--orange); }
+  .info-box.purple { background: var(--purple-subtle); border-left: 4px solid var(--purple); }
+  .info-box.red { background: var(--red-subtle); border-left: 4px solid var(--red); }
+  .info-box strong { font-weight: 600; }
+
+  .compare-table {
+    width: 100%; border-collapse: collapse;
+    margin: 1.25rem 0; font-size: 0.86rem;
+  }
+  .compare-table th, .compare-table td {
+    padding: 0.7rem 0.9rem; border: 1px solid var(--border);
+    text-align: left; vertical-align: top;
+  }
+  .compare-table th {
+    background: var(--surface); font-weight: 600; font-size: 0.8rem;
+    text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-muted);
+  }
+  .compare-table td { line-height: 1.5; }
+  .compare-table tr:nth-child(even) td { background: #fafbfc; }
+
+  .badge {
+    display: inline-block; padding: 0.15rem 0.55rem;
+    border-radius: 12px; font-size: 0.75rem; font-weight: 600;
+    margin-right: 0.3rem;
+  }
+  .badge.blue { background: var(--accent-subtle); color: var(--accent); }
+  .badge.green { background: var(--green-subtle); color: var(--green); }
+  .badge.purple { background: var(--purple-subtle); color: var(--purple); }
+  .badge.orange { background: var(--orange-subtle); color: var(--orange); }
+  .badge.yellow { background: var(--yellow-subtle); color: var(--yellow); }
+  .badge.red { background: var(--red-subtle); color: var(--red); }
+
+  h1 { font-size: 1.55rem; font-weight: 700; margin-bottom: 0.5rem; }
+  h2 { font-size: 1.3rem; font-weight: 700; margin: 2rem 0 0.75rem; }
+  h4 { font-size: 1rem; margin: 1.25rem 0 0.5rem; color: var(--text); }
+  p { margin-bottom: 0.75rem; font-size: 0.93rem; }
+  ul, ol { margin: 0.5rem 0 1rem 1.4rem; font-size: 0.93rem; }
+  li { margin-bottom: 0.35rem; }
+
+  .page-nav {
+    display: flex; justify-content: space-between;
+    margin-top: 3rem; padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .page-nav-btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.5rem 1rem; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 6px;
+    color: var(--accent); font-size: 0.87rem; font-weight: 500;
+    cursor: pointer; text-decoration: none; transition: all 0.15s;
+  }
+  .page-nav-btn:hover { background: var(--accent-subtle); border-color: var(--accent); }
+  .page-nav-btn.disabled { opacity: 0.35; pointer-events: none; }
+
+  .step-list { list-style: none; margin: 1rem 0; padding: 0; }
+  .step-list li {
+    display: flex; gap: 0.75rem; align-items: flex-start;
+    margin-bottom: 1rem; font-size: 0.92rem;
+  }
+  .step-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78rem; font-weight: 700; flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+  @media (max-width: 900px) { .two-col, .three-col { grid-template-columns: 1fr; } }
+
+  .prompt-box {
+    background: #f5f0ff; color: #2d1b69;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.85rem; line-height: 1.55;
+    padding: 1.25rem 1.5rem; border-radius: 8px;
+    margin: 1rem 0; white-space: pre-wrap;
+    position: relative;
+    border-left: 4px solid var(--purple);
+  }
+  .prompt-box .prompt-label {
+    position: absolute; top: -0.55rem; left: 1rem;
+    background: var(--purple); color: #fff;
+    padding: 0.1rem 0.65rem; border-radius: 4px;
+    font-size: 0.7rem; font-weight: 700; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    letter-spacing: 0.03em;
+  }
+
+  .code-box {
+    background: #1e1e2e; color: #cdd6f4;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.83rem; line-height: 1.55;
+    padding: 1.25rem 1.5rem; border-radius: 8px;
+    margin: 1rem 0; white-space: pre-wrap; overflow-x: auto;
+    position: relative;
+  }
+  .code-box .code-label {
+    position: absolute; top: -0.55rem; left: 1rem;
+    background: var(--text); color: #fff;
+    padding: 0.1rem 0.65rem; border-radius: 4px;
+    font-size: 0.7rem; font-weight: 700; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    letter-spacing: 0.03em;
+  }
+  .code-box .comment { color: #6c7086; }
+  .code-box .keyword { color: #cba6f7; }
+  .code-box .string { color: #a6e3a1; }
+  .code-box .function { color: #89b4fa; }
+  .code-box .ghost { color: #585b70; font-style: italic; }
+
+  .try-it {
+    background: var(--purple-subtle); border: 1px solid #d8b4fe;
+    border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;
+  }
+  .try-it h4 {
+    color: var(--purple); margin: 0 0 0.5rem; font-size: 0.95rem;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .try-it p, .try-it li { font-size: 0.88rem; margin: 0 0 0.5rem; }
+  .try-it ol, .try-it ul { margin: 0.25rem 0 0.5rem 1.2rem; }
+
+  .timeline {
+    border-left: 3px solid var(--accent);
+    margin: 1.25rem 0 1.25rem 0.75rem;
+    padding-left: 1.5rem;
+  }
+  .timeline-item { margin-bottom: 1.5rem; position: relative; }
+  .timeline-item::before {
+    content: '';
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--accent); border: 2px solid #fff;
+    position: absolute; left: -1.85rem; top: 0.3rem;
+  }
+  .timeline-item h4 { margin: 0 0 0.25rem; font-weight: 600; font-size: 0.95rem; }
+  .timeline-item p { margin: 0; font-size: 0.88rem; color: var(--text-muted); }
+
+  .track-label {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.2rem 0.7rem; border-radius: 4px;
+    font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .track-infra { background: #dbeafe; color: #1e40af; }
+  .track-dev { background: #dcfce7; color: #166534; }
+  .track-both { background: var(--yellow-subtle); color: var(--yellow); }
+
+  .shortcut-key {
+    display: inline-block;
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.1rem 0.45rem;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text);
+    box-shadow: 0 1px 0 var(--border);
+  }
+
+  .process-flow {
+    display: flex; align-items: center; gap: 0; flex-wrap: wrap;
+    margin: 1rem 0;
+  }
+  .process-step {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.5rem 1rem; font-size: 0.82rem;
+    font-weight: 600; text-align: center;
+  }
+  .process-arrow {
+    font-size: 1.2rem; color: var(--text-muted); padding: 0 0.25rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ SIDEBAR ═══════════════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <h1>GitHub Copilot Workshop</h1>
+    <div class="meta">Connells Group &bull; Interactive Hands-On Session &bull; 60 mins</div>
+  </div>
+  <ul class="nav-list">
+    <li class="nav-group-label">Getting Started</li>
+    <li><a class="nav-link active" data-page="welcome"><span class="nav-num">1</span> Welcome &amp; Session Plan</a></li>
+    <li><a class="nav-link" data-page="setup"><span class="nav-num">2</span> Setup &amp; Free Tier</a></li>
+
+    <li class="nav-group-label">Core Features</li>
+    <li><a class="nav-link" data-page="completions"><span class="nav-num">3</span> Code Completions</a></li>
+    <li><a class="nav-link" data-page="chat"><span class="nav-num">4</span> Copilot Chat</a></li>
+    <li><a class="nav-link" data-page="inline"><span class="nav-num">5</span> Inline Chat &amp; Quick Fixes</a></li>
+    <li><a class="nav-link" data-page="agent"><span class="nav-num">6</span> Agent Mode</a></li>
+
+    <li class="nav-group-label">Infra Track</li>
+    <li><a class="nav-link" data-page="infra-iac"><span class="nav-num">7</span> IaC: Terraform &amp; Bicep</a></li>
+    <li><a class="nav-link" data-page="infra-scripts"><span class="nav-num">8</span> PowerShell &amp; Scripting</a></li>
+    <li><a class="nav-link" data-page="infra-pipelines"><span class="nav-num">9</span> Pipelines &amp; YAML</a></li>
+
+    <li class="nav-group-label">Dev Track</li>
+    <li><a class="nav-link" data-page="dev-code"><span class="nav-num">10</span> Writing &amp; Refactoring Code</a></li>
+    <li><a class="nav-link" data-page="dev-tests"><span class="nav-num">11</span> Tests &amp; Debugging</a></li>
+    <li><a class="nav-link" data-page="dev-docs"><span class="nav-num">12</span> Docs, PRs &amp; Code Review</a></li>
+
+    <li class="nav-group-label">Wrap Up</li>
+    <li><a class="nav-link" data-page="cli"><span class="nav-num">13</span> Copilot in the Terminal</a></li>
+    <li><a class="nav-link" data-page="tips"><span class="nav-num">14</span> Tips &amp; Best Practices</a></li>
+    <li><a class="nav-link" data-page="resources"><span class="nav-num">15</span> Resources &amp; Next Steps</a></li>
+    <li><a class="nav-link" data-page="contact"><span class="nav-num">16</span> Your Account Team</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
+<div class="main">
+
+  <!-- ═══════════════════════ 1 · WELCOME ═══════════════════════ -->
+  <section id="welcome" class="page active">
+    <h1>Welcome &mdash; GitHub Copilot for Tech Teams</h1>
+    <p class="page-subtitle">An interactive, hands-on workshop for Connells Group engineering teams &bull; 60 minutes</p>
+
+    <div class="info-box blue">
+      <strong>What is this session?</strong> A practical, hands-on workshop where you will use GitHub Copilot to write real code, generate infrastructure, debug issues, and automate routine tasks &mdash; all within VS Code. The goal is for you to leave with Copilot installed and an understanding of how it saves time in your daily work.
+    </div>
+
+    <h2>Two Sessions, One Goal</h2>
+    <p>This guide covers both sessions. Look for the track labels to find content tailored to your team:</p>
+
+    <div class="two-col">
+      <div class="card">
+        <h3><span class="track-label track-infra">Infra Track</span></h3>
+        <p><strong>Audience:</strong> Infrastructure, Platform, DevOps, SRE teams</p>
+        <p><strong>Focus areas:</strong></p>
+        <ul>
+          <li>Terraform &amp; Bicep generation</li>
+          <li>PowerShell scripting &amp; automation</li>
+          <li>CI/CD pipeline YAML</li>
+          <li>Troubleshooting &amp; incident response</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="track-label track-dev">Dev Track</span></h3>
+        <p><strong>Audience:</strong> Software developers, product engineering, QA</p>
+        <p><strong>Focus areas:</strong></p>
+        <ul>
+          <li>Writing features &amp; refactoring code</li>
+          <li>Unit tests &amp; debugging</li>
+          <li>Documentation &amp; code review</li>
+          <li>Working with unfamiliar codebases</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>Session Agenda (60 mins)</h2>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <h4>0&ndash;5 min &mdash; Setup Check</h4>
+        <p>Confirm everyone has VS Code + Copilot extension installed and signed in</p>
+      </div>
+      <div class="timeline-item">
+        <h4>5&ndash;10 min &mdash; What Is GitHub Copilot?</h4>
+        <p>Quick demo of completions, chat, and inline chat</p>
+      </div>
+      <div class="timeline-item">
+        <h4>10&ndash;20 min &mdash; Core Features (Hands-On)</h4>
+        <p>Everyone tries completions, chat, and inline chat on a real file</p>
+      </div>
+      <div class="timeline-item">
+        <h4>20&ndash;30 min &mdash; Agent Mode (Hands-On)</h4>
+        <p>Multi-file task using agent mode&rsquo;s plan-and-execute workflow</p>
+      </div>
+      <div class="timeline-item">
+        <h4>30&ndash;50 min &mdash; Track Exercises</h4>
+        <p>Infra or Dev track exercises tailored to your team&rsquo;s daily work &mdash; follow the <strong>Lab Guide</strong> (copilot-github-labs.html)</p>
+      </div>
+      <div class="timeline-item">
+        <h4>50&ndash;60 min &mdash; Tips, Q&amp;A &amp; Next Steps</h4>
+        <p>Best practices, what&rsquo;s available on Free vs Pro, and how to keep going</p>
+      </div>
+    </div>
+
+    <div class="info-box yellow">
+      <strong>Interaction First!</strong> This session is designed so you spend more time typing than watching. Every section has a <span class="badge purple">Try It</span> exercise. Please follow along &mdash; muscle memory is the best way to learn Copilot.
+    </div>
+
+    <div class="page-nav">
+      <span class="page-nav-btn disabled">Start of Guide</span>
+      <a class="page-nav-btn" data-page="setup">Setup &amp; Free Tier &rarr;</a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 2 · SETUP ═══════════════════════ -->
+  <section id="setup" class="page">
+    <h1>Setup &amp; The Free Tier</h1>
+    <p class="page-subtitle">Everything you need to follow along &mdash; no paid licence required</p>
+
+    <h2>What You Get for Free</h2>
+    <p>GitHub Copilot Free gives you enough to experience all the core features in today&rsquo;s session:</p>
+
+    <table class="compare-table">
+      <tr>
+        <th>Feature</th>
+        <th>Free Tier</th>
+        <th>Pro ($10/mo)</th>
+      </tr>
+      <tr>
+        <td>Code completions (ghost text)</td>
+        <td><strong>2,000 / month</strong></td>
+        <td>Unlimited</td>
+      </tr>
+      <tr>
+        <td>Chat &amp; agent mode messages</td>
+        <td><strong>50 / month</strong></td>
+        <td>Unlimited (GPT-5 mini) + 300 premium</td>
+      </tr>
+      <tr>
+        <td>Inline chat</td>
+        <td>Included</td>
+        <td>Included</td>
+      </tr>
+      <tr>
+        <td>Agent mode</td>
+        <td>Included</td>
+        <td>Included</td>
+      </tr>
+      <tr>
+        <td>Next Edit Suggestions</td>
+        <td>Included</td>
+        <td>Included</td>
+      </tr>
+      <tr>
+        <td>Copilot CLI (terminal)</td>
+        <td>Included</td>
+        <td>Included</td>
+      </tr>
+      <tr>
+        <td>Custom instructions &amp; prompt files</td>
+        <td>Included</td>
+        <td>Included</td>
+      </tr>
+      <tr>
+        <td>MCP (Model Context Protocol)</td>
+        <td>Included</td>
+        <td>Included</td>
+      </tr>
+      <tr>
+        <td>Models available</td>
+        <td>GPT-4.1, GPT-5 mini, Claude Haiku 4.5</td>
+        <td>All of Free + Claude Opus, Sonnet, Gemini, etc.</td>
+      </tr>
+    </table>
+
+    <div class="info-box green">
+      <strong>50 chat messages is enough for this workshop.</strong> We&rsquo;ll use roughly 15&ndash;20 messages during the session. Save the rest for experimenting on your own afterwards.
+    </div>
+
+    <h2>Setup Steps</h2>
+
+    <ul class="step-list">
+      <li>
+        <span class="step-num">1</span>
+        <div>
+          <strong>Create a GitHub account</strong> (if you do not already have one)<br>
+          Go to <strong>github.com/signup</strong> &mdash; use your personal email to keep it independent of any org setup.
+        </div>
+      </li>
+      <li>
+        <span class="step-num">2</span>
+        <div>
+          <strong>Activate Copilot Free</strong><br>
+          Go to <strong>github.com/copilot</strong> &rarr; click <em>&ldquo;Get started&rdquo;</em>. No credit card required.
+        </div>
+      </li>
+      <li>
+        <span class="step-num">3</span>
+        <div>
+          <strong>Install VS Code</strong> (if you do not already have it)<br>
+          Download from <strong>code.visualstudio.com</strong>. Any recent version works.
+        </div>
+      </li>
+      <li>
+        <span class="step-num">4</span>
+        <div>
+          <strong>Install the GitHub Copilot extension</strong><br>
+          Open VS Code &rarr; Extensions panel (<span class="shortcut-key">Ctrl+Shift+X</span>) &rarr; search <em>&ldquo;GitHub Copilot&rdquo;</em> &rarr; Install. This installs both the Copilot and Copilot Chat extensions.
+        </div>
+      </li>
+      <li>
+        <span class="step-num">5</span>
+        <div>
+          <strong>Sign in to GitHub</strong><br>
+          Click the Copilot icon in the bottom-right of VS Code &rarr; Sign in with your GitHub account. Authorise when prompted.
+        </div>
+      </li>
+    </ul>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Try It: Confirm Setup</h4>
+      <ol>
+        <li>Open VS Code and create a new file called <code>test.js</code></li>
+        <li>Type <code>function hello(</code> and pause</li>
+        <li>You should see grey &ldquo;ghost text&rdquo; appearing as a suggestion</li>
+        <li>Press <span class="shortcut-key">Tab</span> to accept the suggestion</li>
+        <li>If you see ghost text &mdash; Copilot is working!</li>
+      </ol>
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="welcome">&larr; Welcome</a>
+      <a class="page-nav-btn" data-page="completions">Code Completions &rarr;</a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 3 · CODE COMPLETIONS ═══════════════════════ -->
+  <section id="completions" class="page">
+    <h1>Code Completions (Ghost Text)</h1>
+    <p class="page-subtitle"><span class="track-label track-both">Both Tracks</span> &bull; The core feature &mdash; AI-powered autocomplete on steroids</p>
+
+    <div class="info-box blue">
+      <strong>How it works:</strong> As you type, Copilot analyses your current file, open files, and comments, then suggests entire lines or blocks of code as grey &ldquo;ghost text.&rdquo; You press <span class="shortcut-key">Tab</span> to accept, <span class="shortcut-key">Esc</span> to dismiss, or <span class="shortcut-key">Alt+]</span> to cycle through alternatives.
+    </div>
+
+    <h2>Key Shortcuts</h2>
+    <table class="compare-table">
+      <tr><th>Action</th><th>Shortcut</th></tr>
+      <tr><td>Accept suggestion</td><td><span class="shortcut-key">Tab</span></td></tr>
+      <tr><td>Dismiss suggestion</td><td><span class="shortcut-key">Esc</span></td></tr>
+      <tr><td>Next suggestion</td><td><span class="shortcut-key">Alt+]</span></td></tr>
+      <tr><td>Previous suggestion</td><td><span class="shortcut-key">Alt+[</span></td></tr>
+      <tr><td>Accept word-by-word</td><td><span class="shortcut-key">Ctrl+Right</span></td></tr>
+      <tr><td>Trigger suggestions manually</td><td><span class="shortcut-key">Alt+\</span></td></tr>
+    </table>
+
+    <h2>The Secret: Comments Drive Completions</h2>
+    <p>Copilot reads your comments as intent. Writing a clear comment before a function is the single best way to get accurate suggestions:</p>
+
+    <div class="code-box">
+      <span class="code-label">example.py</span>
+<span class="comment"># Calculate the monthly mortgage repayment amount
+# given the principal, annual interest rate, and term in years
+# using the standard amortisation formula</span>
+<span class="keyword">def</span> <span class="function">calculate_monthly_repayment</span>(principal, annual_rate, term_years):
+<span class="ghost">    monthly_rate = annual_rate / 12 / 100
+    num_payments = term_years * 12
+    if monthly_rate == 0:
+        return principal / num_payments
+    payment = principal * (monthly_rate * (1 + monthly_rate)**num_payments) / ((1 + monthly_rate)**num_payments - 1)
+    return round(payment, 2)</span>
+    </div>
+    <p style="font-size: 0.82rem; color: var(--text-muted);">The grey italic text is what Copilot suggests automatically after you write the comment and function signature.</p>
+
+    <h2>Next Edit Suggestions (NES)</h2>
+    <p>A newer feature &mdash; when you edit one part of a file, Copilot proactively suggests the <em>next logical edit</em> you need to make. You&rsquo;ll see a lightbulb or ghost text at a different location in the file. Press <span class="shortcut-key">Tab</span> to accept and jump there.</p>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Try It: Comment-Driven Completions</h4>
+      <ol>
+        <li>Create a new file: <code>mortgage.py</code> (or <code>mortgage.cs</code> / <code>mortgage.ts</code> &mdash; any language you like)</li>
+        <li>Type a comment: <code># Validate a UK postcode format and return true if valid</code></li>
+        <li>Press <span class="shortcut-key">Enter</span> and start typing <code>def validate_postcode(</code></li>
+        <li>Watch the ghost text appear &mdash; press <span class="shortcut-key">Tab</span> to accept</li>
+        <li>Now add another comment: <code># Calculate stamp duty for a property purchase in England</code></li>
+        <li>Let Copilot generate the full function</li>
+      </ol>
+      <p><strong>Discussion:</strong> How close was the output? How much editing did you need? That editing part is important &mdash; Copilot drafts, you refine.</p>
+    </div>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Try It: Repetitive Patterns</h4>
+      <p>Copilot excels at continuing patterns. Try this:</p>
+      <ol>
+        <li>Create a new file and type a few lines of a mapping or configuration</li>
+        <li>For example, start defining a dictionary of UK regions to office codes</li>
+        <li>After 2&ndash;3 entries, Copilot will predict the pattern and fill the rest</li>
+      </ol>
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="setup">&larr; Setup</a>
+      <a class="page-nav-btn" data-page="chat">Copilot Chat &rarr;</a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 4 · COPILOT CHAT ═══════════════════════ -->
+  <section id="chat" class="page">
+    <h1>Copilot Chat</h1>
+    <p class="page-subtitle"><span class="track-label track-both">Both Tracks</span> &bull; Your AI pair programmer in the sidebar</p>
+
+    <div class="info-box blue">
+      <strong>Open Copilot Chat:</strong> <span class="shortcut-key">Ctrl+Alt+I</span> &mdash; or click the Copilot icon in the sidebar. You can ask questions, reference files, and get code suggestions in a conversational format.
+    </div>
+
+    <h2>What Can You Ask?</h2>
+    <div class="two-col">
+      <div class="card">
+        <h3>Explain &amp; Understand</h3>
+        <ul>
+          <li>&ldquo;Explain this function&rdquo;</li>
+          <li>&ldquo;What does this regex do?&rdquo;</li>
+          <li>&ldquo;What are the security implications of this code?&rdquo;</li>
+          <li>&ldquo;Summarise the changes in this file&rdquo;</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Generate &amp; Create</h3>
+        <ul>
+          <li>&ldquo;Write a function that validates an email address&rdquo;</li>
+          <li>&ldquo;Create a SQL query to find duplicate records&rdquo;</li>
+          <li>&ldquo;Generate a Terraform module for an Azure App Service&rdquo;</li>
+          <li>&ldquo;Create a PowerShell script to check disk space&rdquo;</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>Context Is King: Using @ References</h2>
+    <p>The more context you give Copilot, the better the answer. Use <code>@</code> to reference specific context:</p>
+
+    <table class="compare-table">
+      <tr><th>Reference</th><th>What it does</th><th>Example</th></tr>
+      <tr><td><code>@workspace</code></td><td>Searches your entire workspace for relevant code</td><td>&ldquo;@workspace where is the database connection configured?&rdquo;</td></tr>
+      <tr><td><code>#file</code></td><td>References a specific file</td><td>&ldquo;Explain #file:appsettings.json&rdquo;</td></tr>
+      <tr><td><code>#selection</code></td><td>References your currently selected code</td><td>&ldquo;Refactor #selection to use async/await&rdquo;</td></tr>
+      <tr><td><code>#terminalLastCommand</code></td><td>References the last terminal command output</td><td>&ldquo;Explain this error #terminalLastCommand&rdquo;</td></tr>
+    </table>
+
+    <h2>Slash Commands</h2>
+    <p>Quick shortcuts for common tasks:</p>
+    <table class="compare-table">
+      <tr><th>Command</th><th>What it does</th></tr>
+      <tr><td><code>/explain</code></td><td>Explain the selected code or file</td></tr>
+      <tr><td><code>/fix</code></td><td>Propose a fix for problems in the selected code</td></tr>
+      <tr><td><code>/tests</code></td><td>Generate unit tests for the selected code</td></tr>
+      <tr><td><code>/doc</code></td><td>Generate documentation for the selected code</td></tr>
+      <tr><td><code>/clear</code></td><td>Start a fresh chat conversation</td></tr>
+    </table>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Try It: Chat with Your Code</h4>
+      <ol>
+        <li>Open the file you created in the last exercise (or any code file from your projects)</li>
+        <li>Open Copilot Chat (<span class="shortcut-key">Ctrl+Alt+I</span>)</li>
+        <li>Type: <em>&ldquo;Explain what this file does and suggest improvements&rdquo;</em></li>
+        <li>Now select a function and type: <em>&ldquo;/tests generate unit tests for this function&rdquo;</em></li>
+        <li>Try: <em>&ldquo;Rewrite this to handle edge cases like empty input and negative numbers&rdquo;</em></li>
+      </ol>
+    </div>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Try It: The &ldquo;Unfamiliar Codebase&rdquo; Scenario</h4>
+      <p>One of the biggest time-savers &mdash; using Copilot to understand code you did not write:</p>
+      <ol>
+        <li>Open any file from a project you are less familiar with</li>
+        <li>Ask: <em>&ldquo;@workspace give me an overview of this project&rsquo;s architecture&rdquo;</em></li>
+        <li>Ask: <em>&ldquo;@workspace where is the authentication logic?&rdquo;</em></li>
+        <li>Ask: <em>&ldquo;@workspace how does the data flow from the API to the database?&rdquo;</em></li>
+      </ol>
+      <p><strong>Discussion:</strong> How long would it have taken to answer those questions by reading the code manually?</p>
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="completions">&larr; Code Completions</a>
+      <a class="page-nav-btn" data-page="inline">Inline Chat &rarr;</a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 5 · INLINE CHAT ═══════════════════════ -->
+  <section id="inline" class="page">
+    <h1>Inline Chat &amp; Quick Fixes</h1>
+    <p class="page-subtitle"><span class="track-label track-both">Both Tracks</span> &bull; Edit code without leaving the editor</p>
+
+    <div class="info-box blue">
+      <strong>Open Inline Chat:</strong> Select code (or place your cursor) and press <span class="shortcut-key">Ctrl+I</span>. A small prompt box appears directly in the editor &mdash; type your instruction and Copilot edits the code in place, showing a diff you can accept or reject.
+    </div>
+
+    <h2>When to Use Inline Chat vs Sidebar Chat</h2>
+    <table class="compare-table">
+      <tr><th>Use Inline Chat When...</th><th>Use Sidebar Chat When...</th></tr>
+      <tr><td>You want to edit a specific block of code</td><td>You want to generate something from scratch</td></tr>
+      <tr><td>You want to see the diff immediately</td><td>You want to have a longer conversation</td></tr>
+      <tr><td>Quick refactor, rename, fix</td><td>Architecture questions, explanations</td></tr>
+      <tr><td>Adding error handling to existing code</td><td>Comparing approaches, multi-file tasks</td></tr>
+    </table>
+
+    <h2>Quick Fix Integration</h2>
+    <p>When VS Code shows a squiggly underline (error or warning), hover over it and look for the lightbulb (<span class="shortcut-key">Ctrl+.</span>). Copilot adds AI-powered fix suggestions alongside the standard VS Code quick fixes:</p>
+    <ul>
+      <li><strong>&ldquo;Fix using Copilot&rdquo;</strong> &mdash; Copilot analyses the error and proposes a fix</li>
+      <li><strong>&ldquo;Explain using Copilot&rdquo;</strong> &mdash; explains what the error means and why it occurred</li>
+    </ul>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Try It: Inline Refactoring</h4>
+      <ol>
+        <li>Open your <code>mortgage.py</code> file (or create a function with some messy code)</li>
+        <li>Select a function, press <span class="shortcut-key">Ctrl+I</span></li>
+        <li>Type: <em>&ldquo;Add input validation and meaningful error messages&rdquo;</em></li>
+        <li>Review the diff &mdash; press <span class="shortcut-key">Enter</span> to accept or <span class="shortcut-key">Esc</span> to reject</li>
+        <li>Now select the same code and press <span class="shortcut-key">Ctrl+I</span> again</li>
+        <li>Type: <em>&ldquo;Add type hints and a docstring&rdquo;</em></li>
+      </ol>
+    </div>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Try It: Fix an Error</h4>
+      <ol>
+        <li>Deliberately introduce a bug (wrong variable name, missing import, off-by-one error)</li>
+        <li>Wait for the red squiggly underline to appear</li>
+        <li>Hover and click the lightbulb &rarr; choose <em>&ldquo;Fix using Copilot&rdquo;</em></li>
+        <li>See how Copilot diagnoses and fixes the issue</li>
+      </ol>
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="chat">&larr; Copilot Chat</a>
+      <a class="page-nav-btn" data-page="agent">Agent Mode &rarr;</a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 6 · AGENT MODE ═══════════════════════ -->
+  <section id="agent" class="page">
+    <h1>Agent Mode</h1>
+    <p class="page-subtitle"><span class="track-label track-both">Both Tracks</span> &bull; Multi-step, multi-file tasks &mdash; Copilot plans and executes</p>
+
+    <div class="info-box purple">
+      <strong>What makes Agent Mode different?</strong> In normal chat, Copilot answers questions. In Agent Mode, Copilot <em>takes action</em> &mdash; it can create files, edit multiple files, run terminal commands, and iterate on errors. It plans a sequence of steps and executes them, asking for your approval at each stage.
+    </div>
+
+    <h2>How to Activate Agent Mode</h2>
+    <ul class="step-list">
+      <li>
+        <span class="step-num">1</span>
+        <div>Open Copilot Chat (<span class="shortcut-key">Ctrl+Alt+I</span>)</div>
+      </li>
+      <li>
+        <span class="step-num">2</span>
+        <div>At the top of the chat panel, switch the mode dropdown from <strong>&ldquo;Ask&rdquo;</strong> to <strong>&ldquo;Agent&rdquo;</strong></div>
+      </li>
+      <li>
+        <span class="step-num">3</span>
+        <div>Type your request &mdash; describe the <em>outcome</em>, not individual steps</div>
+      </li>
+      <li>
+        <span class="step-num">4</span>
+        <div>Copilot will propose a plan. Review each step and approve edits as they come</div>
+      </li>
+    </ul>
+
+    <h2>What Agent Mode Can Do</h2>
+    <div class="two-col">
+      <div class="card">
+        <h3>Create &amp; Scaffold</h3>
+        <ul>
+          <li>Create a whole project structure with multiple files</li>
+          <li>Generate a REST API with models, routes, and tests</li>
+          <li>Scaffold IaC for an environment with networking, compute, and storage</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Edit &amp; Fix</h3>
+        <ul>
+          <li>Refactor across multiple files simultaneously</li>
+          <li>Fix a failing build by reading the error and editing the source</li>
+          <li>Run tests, see failures, and iterate until they pass</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="info-box yellow">
+      <strong>Free Tier Note:</strong> Agent mode uses your 50 monthly chat messages. Each &ldquo;turn&rdquo; in the conversation counts as one message. A multi-step task might use 3&ndash;5 messages. Use them wisely during the workshop &mdash; aim for 2&ndash;3 agent exercises.
+    </div>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Try It: Build Something with Agent Mode</h4>
+      <p><strong>Infra teams:</strong></p>
+      <div class="prompt-box"><span class="prompt-label">AGENT PROMPT</span>
+Create a Terraform module that deploys an Azure resource group,
+a virtual network with two subnets (web and data), and an NSG
+that allows HTTPS inbound on the web subnet only.
+Include variables for location, environment name, and address space.
+Output the resource group name and subnet IDs.</div>
+
+      <p><strong>Dev teams:</strong></p>
+      <div class="prompt-box"><span class="prompt-label">AGENT PROMPT</span>
+Create a simple REST API in C# (.NET 8 minimal API) with:
+- A GET /properties endpoint that returns a list of properties
+- A GET /properties/{id} endpoint that returns a single property
+- A Property model with fields: Id, Address, Price, Bedrooms, Status
+- In-memory data store with 5 sample properties
+- Basic input validation and error handling
+Include a .http file to test the endpoints.</div>
+
+      <ol>
+        <li>Switch to <strong>Agent</strong> mode in the chat dropdown</li>
+        <li>Paste or type the prompt above (pick your track)</li>
+        <li>Watch Copilot plan the files and edits</li>
+        <li>Review each proposed change before accepting</li>
+        <li><strong>Discussion:</strong> How long would this have taken from scratch?</li>
+      </ol>
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="inline">&larr; Inline Chat</a>
+      <a class="page-nav-btn" data-page="infra-iac">IaC: Terraform &amp; Bicep &rarr;</a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 7 · INFRA: IAC ═══════════════════════ -->
+  <section id="infra-iac" class="page">
+    <h1>Infrastructure as Code: Terraform &amp; Bicep</h1>
+    <p class="page-subtitle"><span class="track-label track-infra">Infra Track</span> &bull; Generate, explain, and refactor IaC</p>
+
+    <div class="info-box blue">
+      <strong>Why Copilot is a game-changer for IaC:</strong> Terraform and Bicep involve a huge amount of boilerplate, provider-specific syntax, and best-practice configuration that is hard to memorise. Copilot knows the patterns and generates compliant, parameterised code from natural language descriptions.
+    </div>
+
+    <h2>Terraform Exercises</h2>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 1: Generate a Module from a Comment</h4>
+      <ol>
+        <li>Create a file: <code>main.tf</code></li>
+        <li>Type this comment at the top:</li>
+      </ol>
+      <div class="code-box"><span class="code-label">main.tf</span>
+<span class="comment"># Azure Storage Account with:</span>
+<span class="comment"># - Standard LRS replication</span>
+<span class="comment"># - Blob container called "backups" with private access</span>
+<span class="comment"># - Lifecycle rule to move blobs to cool tier after 30 days</span>
+<span class="comment"># - Tags: environment and managed_by</span></div>
+      <ol start="3">
+        <li>Press <span class="shortcut-key">Enter</span> and watch Copilot generate the Terraform resources</li>
+        <li>Accept with <span class="shortcut-key">Tab</span>, then keep pressing Enter &mdash; Copilot will continue generating related blocks</li>
+      </ol>
+    </div>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 2: Explain Existing IaC</h4>
+      <p>Paste or open a complex Terraform file from your projects, then in Chat:</p>
+      <div class="prompt-box"><span class="prompt-label">CHAT PROMPT</span>
+Explain this Terraform configuration. What resources does it create,
+what are the dependencies between them, and are there any
+security concerns or best-practice violations?</div>
+    </div>
+
+    <h2>Bicep Exercises</h2>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 3: Convert ARM to Bicep</h4>
+      <p>If you have an ARM template, paste it into chat and ask:</p>
+      <div class="prompt-box"><span class="prompt-label">CHAT PROMPT</span>
+Convert this ARM template to Bicep. Use parameter decorators,
+meaningful resource names, and add descriptions to all parameters.</div>
+    </div>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 4: Add to Existing IaC</h4>
+      <p>Open your generated Terraform/Bicep and use inline chat (<span class="shortcut-key">Ctrl+I</span>):</p>
+      <ul>
+        <li>&ldquo;Add a diagnostic setting that sends logs to a Log Analytics workspace&rdquo;</li>
+        <li>&ldquo;Add a private endpoint for this storage account&rdquo;</li>
+        <li>&ldquo;Add outputs for the connection string and primary key&rdquo;</li>
+      </ul>
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="agent">&larr; Agent Mode</a>
+      <a class="page-nav-btn" data-page="infra-scripts">PowerShell &amp; Scripting &rarr;</a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 8 · INFRA: SCRIPTS ═══════════════════════ -->
+  <section id="infra-scripts" class="page">
+    <h1>PowerShell &amp; Scripting</h1>
+    <p class="page-subtitle"><span class="track-label track-infra">Infra Track</span> &bull; Automate ops tasks faster</p>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 1: Generate a Health Check Script</h4>
+      <ol>
+        <li>Create a new file: <code>healthcheck.ps1</code></li>
+        <li>Type a comment:</li>
+      </ol>
+      <div class="code-box"><span class="code-label">healthcheck.ps1</span>
+<span class="comment"># Check the health of a Windows server:</span>
+<span class="comment"># - CPU usage (warn if >80%)</span>
+<span class="comment"># - Memory usage (warn if >85%)</span>
+<span class="comment"># - Disk space on all drives (warn if <10% free)</span>
+<span class="comment"># - Top 5 processes by memory consumption</span>
+<span class="comment"># - Output results as a formatted table</span></div>
+      <ol start="3">
+        <li>Let Copilot complete the script</li>
+        <li>Use inline chat (<span class="shortcut-key">Ctrl+I</span>) to add: <em>&ldquo;Add an option to export results to a CSV file&rdquo;</em></li>
+      </ol>
+    </div>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 2: Translate Between Languages</h4>
+      <p>Got a Bash script that needs to be PowerShell (or vice versa)?</p>
+      <ol>
+        <li>Paste or open a Bash script</li>
+        <li>In chat, ask: <em>&ldquo;Convert this Bash script to PowerShell, maintaining the same functionality and adding error handling&rdquo;</em></li>
+        <li>Bonus: try converting a PowerShell script to Python</li>
+      </ol>
+    </div>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 3: AD / Azure Automation</h4>
+      <p>In chat or agent mode, try:</p>
+      <div class="prompt-box"><span class="prompt-label">CHAT PROMPT</span>
+Write a PowerShell script that connects to Microsoft Graph API and:
+1. Gets all users who have not signed in for 90+ days
+2. Exports their display name, email, last sign-in date, and department
+3. Outputs to a CSV file
+Include error handling and a parameter for the number of days.</div>
+    </div>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 4: Debug a Script</h4>
+      <p>Open a script that is not working as expected and ask in chat:</p>
+      <div class="prompt-box"><span class="prompt-label">CHAT PROMPT</span>
+This script is supposed to [describe expected behaviour] but instead
+it [describe actual behaviour]. Analyse the script and identify the bug.
+Explain the root cause and provide a fix.</div>
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="infra-iac">&larr; Terraform &amp; Bicep</a>
+      <a class="page-nav-btn" data-page="infra-pipelines">Pipelines &amp; YAML &rarr;</a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 9 · INFRA: PIPELINES ═══════════════════════ -->
+  <section id="infra-pipelines" class="page">
+    <h1>Pipelines &amp; YAML</h1>
+    <p class="page-subtitle"><span class="track-label track-infra">Infra Track</span> &bull; CI/CD configuration at speed</p>
+
+    <div class="info-box blue">
+      <strong>YAML is Copilot&rsquo;s sweet spot.</strong> CI/CD files are highly structured and repetitive. Copilot has seen millions of pipeline definitions and generates accurate, well-structured YAML with the right indentation (which matters a lot in YAML!).
+    </div>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 1: Generate a Pipeline</h4>
+      <ol>
+        <li>Create a file: <code>azure-pipelines.yml</code> (or <code>.github/workflows/build.yml</code>)</li>
+        <li>Type a comment at the top:</li>
+      </ol>
+      <div class="code-box"><span class="code-label">azure-pipelines.yml</span>
+<span class="comment"># Azure DevOps pipeline that:</span>
+<span class="comment"># - Triggers on pushes to main and develop</span>
+<span class="comment"># - Uses a .NET 8 build agent</span>
+<span class="comment"># - Restores NuGet packages</span>
+<span class="comment"># - Builds the solution</span>
+<span class="comment"># - Runs unit tests with code coverage</span>
+<span class="comment"># - Publishes the artifact for deployment</span></div>
+      <ol start="3">
+        <li>Let Copilot generate the pipeline</li>
+        <li>Use inline chat to: <em>&ldquo;Add a deployment stage to an Azure App Service with approval gate&rdquo;</em></li>
+      </ol>
+    </div>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 2: Docker + Compose</h4>
+      <div class="prompt-box"><span class="prompt-label">CHAT PROMPT</span>
+Create a Dockerfile for a .NET 8 web API that uses multi-stage build
+for a smaller image. Then create a docker-compose.yml that includes
+the API, a SQL Server container, and a Redis cache container with
+appropriate networking and environment variables.</div>
+    </div>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 3: Explain and Fix a Pipeline</h4>
+      <p>Open an existing pipeline YAML file and ask:</p>
+      <ul>
+        <li><em>&ldquo;/explain what does this pipeline do step by step?&rdquo;</em></li>
+        <li><em>&ldquo;Are there any security issues with this pipeline? (e.g. hardcoded secrets, excessive permissions)&rdquo;</em></li>
+        <li><em>&ldquo;Optimise this pipeline for faster build times&rdquo;</em></li>
+      </ul>
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="infra-scripts">&larr; PowerShell &amp; Scripting</a>
+      <a class="page-nav-btn" data-page="dev-code">Writing &amp; Refactoring Code &rarr;</a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 10 · DEV: CODE ═══════════════════════ -->
+  <section id="dev-code" class="page">
+    <h1>Writing &amp; Refactoring Code</h1>
+    <p class="page-subtitle"><span class="track-label track-dev">Dev Track</span> &bull; From feature building to codebase clean-up</p>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 1: Build a Feature</h4>
+      <p>Use agent mode to build something similar to what you&rsquo;d do in a sprint:</p>
+      <div class="prompt-box"><span class="prompt-label">AGENT PROMPT</span>
+Create a C# class library that implements a property valuation calculator:
+- Method to estimate property value based on postcode, bedrooms,
+  property type, and square footage
+- Use a simple weighted scoring model
+- Include XML doc comments on all public members
+- Add an interface IValuationCalculator for testability
+- Include a sample console app that demonstrates usage</div>
+      <p>Alternatively, adapt this to whatever language and domain your team works with.</p>
+    </div>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 2: Refactor Existing Code</h4>
+      <ol>
+        <li>Open a file with code you know could be cleaner</li>
+        <li>Select the messy section and press <span class="shortcut-key">Ctrl+I</span></li>
+        <li>Try these prompts one at a time:</li>
+      </ol>
+      <ul>
+        <li><em>&ldquo;Extract this into smaller, single-responsibility methods&rdquo;</em></li>
+        <li><em>&ldquo;Replace these nested if-else blocks with a strategy pattern&rdquo;</em></li>
+        <li><em>&ldquo;Convert this synchronous code to async/await&rdquo;</em></li>
+        <li><em>&ldquo;Add LINQ instead of these foreach loops&rdquo;</em></li>
+      </ul>
+    </div>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 3: SQL Queries</h4>
+      <p>In chat:</p>
+      <div class="prompt-box"><span class="prompt-label">CHAT PROMPT</span>
+Write a SQL query for a property database that finds:
+- All properties listed in the last 30 days
+- Grouped by region with average price, min price, max price
+- Only regions with more than 5 listings
+- Ordered by average price descending
+Use a CTE and include comments explaining the logic.</div>
+      <p>Follow up with: <em>&ldquo;Now create a stored procedure version with parameters for date range and minimum listings&rdquo;</em></p>
+    </div>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 4: Convert Between Formats / Languages</h4>
+      <ul>
+        <li>Paste a JSON payload and ask Copilot to generate a C# model class from it</li>
+        <li>Paste an XML config and ask to convert to JSON</li>
+        <li>Take a JavaScript function and ask to convert to TypeScript with proper types</li>
+      </ul>
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="infra-pipelines">&larr; Pipelines &amp; YAML</a>
+      <a class="page-nav-btn" data-page="dev-tests">Tests &amp; Debugging &rarr;</a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 11 · DEV: TESTS ═══════════════════════ -->
+  <section id="dev-tests" class="page">
+    <h1>Tests &amp; Debugging</h1>
+    <p class="page-subtitle"><span class="track-label track-dev">Dev Track</span> &bull; The tasks nobody wants to do manually</p>
+
+    <div class="info-box green">
+      <strong>Writing tests is one of Copilot&rsquo;s highest-value use cases.</strong> Developers consistently report that test generation is where they save the most time. Copilot understands your code structure and generates meaningful test cases including edge cases you might miss.
+    </div>
+
+    <h2>Generating Tests</h2>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 1: Unit Tests from Code</h4>
+      <ol>
+        <li>Open the code you generated in the previous exercises</li>
+        <li>Select a function or class</li>
+        <li>Right-click &rarr; <em>&ldquo;Copilot&rdquo;</em> &rarr; <em>&ldquo;Generate Tests&rdquo;</em> (or type <code>/tests</code> in chat)</li>
+        <li>Review the generated tests &mdash; note how Copilot includes edge cases</li>
+      </ol>
+      <p>Alternatively, in Chat:</p>
+      <div class="prompt-box"><span class="prompt-label">CHAT PROMPT</span>
+Generate xUnit tests for #file:ValuationCalculator.cs
+Include:
+- Happy path tests for each method
+- Edge cases: zero values, negative numbers, null inputs
+- Boundary tests for postcode validation
+- Use descriptive test names following the Given_When_Then pattern</div>
+    </div>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 2: Debug a Failing Test</h4>
+      <ol>
+        <li>Run your tests (some may fail if the generated code needs tweaking)</li>
+        <li>Copy the test failure output</li>
+        <li>In Chat, type: <em>&ldquo;This test is failing with this error: [paste error]. Explain why and fix it.&rdquo;</em></li>
+        <li>Or use <code>#terminalLastCommand</code>: <em>&ldquo;Explain why this test failed #terminalLastCommand and fix the code&rdquo;</em></li>
+      </ol>
+    </div>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 3: Explain a Stack Trace</h4>
+      <p>Got a production error? Paste the stack trace into Chat:</p>
+      <div class="prompt-box"><span class="prompt-label">CHAT PROMPT</span>
+Explain this stack trace in plain English. What went wrong,
+what is the root cause, and what are the likely fixes?
+
+[paste your stack trace here]</div>
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="dev-code">&larr; Writing &amp; Refactoring</a>
+      <a class="page-nav-btn" data-page="dev-docs">Docs, PRs &amp; Reviews &rarr;</a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 12 · DEV: DOCS ═══════════════════════ -->
+  <section id="dev-docs" class="page">
+    <h1>Docs, PRs &amp; Code Review</h1>
+    <p class="page-subtitle"><span class="track-label track-dev">Dev Track</span> &bull; The other half of the job</p>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 1: Generate Documentation</h4>
+      <ol>
+        <li>Select a function or class in your code</li>
+        <li>In Chat, type: <code>/doc</code></li>
+        <li>Copilot generates XML doc comments (C#), JSDoc (JS/TS), or docstrings (Python)</li>
+      </ol>
+      <p>For a whole project README:</p>
+      <div class="prompt-box"><span class="prompt-label">CHAT PROMPT</span>
+@workspace Generate a README.md for this project including:
+- Project overview and purpose
+- Prerequisites and setup instructions
+- How to build and run
+- API endpoint documentation
+- Architecture decisions</div>
+    </div>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 2: Code Review Assistance</h4>
+      <p>Select a section of code (yours or someone else&rsquo;s) and ask:</p>
+      <div class="prompt-box"><span class="prompt-label">CHAT PROMPT</span>
+Review this code for:
+- Security vulnerabilities (SQL injection, XSS, etc.)
+- Performance issues
+- Error handling gaps
+- SOLID principle violations
+- Naming and readability improvements
+Be specific about line numbers and provide fix suggestions.</div>
+    </div>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Exercise 3: Commit Messages &amp; PR Descriptions</h4>
+      <p>In the Source Control panel (Git), when you are about to commit:</p>
+      <ol>
+        <li>Click the sparkle/Copilot icon in the commit message box</li>
+        <li>Copilot auto-generates a commit message based on your staged changes</li>
+        <li>For PR descriptions, ask in Chat: <em>&ldquo;@workspace Generate a PR description for the changes I have made. Include what changed, why, and any testing notes.&rdquo;</em></li>
+      </ol>
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="dev-tests">&larr; Tests &amp; Debugging</a>
+      <a class="page-nav-btn" data-page="cli">Copilot CLI &rarr;</a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 13 · CLI ═══════════════════════ -->
+  <section id="cli" class="page">
+    <h1>Copilot in the Terminal</h1>
+    <p class="page-subtitle"><span class="track-label track-both">Both Tracks</span> &bull; Never Google a CLI command again</p>
+
+    <div class="info-box blue">
+      <strong>Two ways to use Copilot in the terminal:</strong>
+      <br>1. <strong>VS Code Terminal Chat:</strong> In the integrated terminal, press <span class="shortcut-key">Ctrl+I</span> and describe what you want to do
+      <br>2. <strong>GitHub Copilot CLI:</strong> Install <code>gh copilot</code> for use in any terminal (PowerShell, Bash, etc.)
+    </div>
+
+    <h2>VS Code Terminal Chat</h2>
+    <p>Click in the VS Code integrated terminal and press <span class="shortcut-key">Ctrl+I</span>. A prompt appears where you can describe what you want:</p>
+
+    <div class="try-it">
+      <h4>&#9997;&#65039; Try It: Terminal Chat</h4>
+      <ol>
+        <li>Click in the VS Code terminal, press <span class="shortcut-key">Ctrl+I</span></li>
+        <li>Type: <em>&ldquo;Find all files modified in the last 7 days larger than 1MB&rdquo;</em></li>
+        <li>Copilot generates the correct command for your OS (PowerShell on Windows, bash on Mac/Linux)</li>
+        <li>Press <span class="shortcut-key">Enter</span> to run it, or <span class="shortcut-key">Esc</span> to dismiss</li>
+      </ol>
+      <p>More examples to try:</p>
+      <ul>
+        <li><em>&ldquo;List all running Docker containers with their port mappings&rdquo;</em></li>
+        <li><em>&ldquo;Kill the process using port 5000&rdquo;</em></li>
+        <li><em>&ldquo;Show git log for the last week with a graph&rdquo;</em></li>
+        <li><em>&ldquo;Compress all .log files in this directory into a zip&rdquo;</em></li>
+        <li><em>&ldquo;Show the 10 largest files in this directory tree&rdquo;</em></li>
+      </ul>
+    </div>
+
+    <h2>Smart Terminal Error Resolution</h2>
+    <p>When a command fails in the VS Code terminal, you will see a sparkle icon next to the error. Click it and Copilot will explain the error and suggest a fix. You can also type in Chat:</p>
+    <div class="prompt-box"><span class="prompt-label">CHAT PROMPT</span>
+Explain this terminal error and suggest a fix #terminalLastCommand</div>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="dev-docs">&larr; Docs &amp; PRs</a>
+      <a class="page-nav-btn" data-page="tips">Tips &amp; Best Practices &rarr;</a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 14 · TIPS ═══════════════════════ -->
+  <section id="tips" class="page">
+    <h1>Tips &amp; Best Practices</h1>
+    <p class="page-subtitle">Get the most out of GitHub Copilot</p>
+
+    <h2>The &ldquo;Copilot Mindset&rdquo;</h2>
+    <div class="info-box purple">
+      <strong>Think of Copilot as a very fast junior developer.</strong> It is incredibly productive at drafting code, but you are the senior engineer who reviews, refines, and takes responsibility for the output. The best results come from clear instructions and active review&mdash;not blind acceptance.
+    </div>
+
+    <h2>Top Tips for Better Results</h2>
+    <div class="two-col">
+      <div class="card">
+        <h3>1. Write Good Comments First</h3>
+        <p>Comments are prompts. A clear, specific comment produces dramatically better completions than starting to type code directly.</p>
+      </div>
+      <div class="card">
+        <h3>2. Open Relevant Files</h3>
+        <p>Copilot uses your open tabs as context. If you are building a new endpoint, have the model, existing endpoints, and tests open in tabs.</p>
+      </div>
+      <div class="card">
+        <h3>3. Be Specific in Prompts</h3>
+        <p>Instead of &ldquo;create a function,&rdquo; say &ldquo;create a C# method that takes a postcode string, validates it against the UK format, and returns a bool.&rdquo;</p>
+      </div>
+      <div class="card">
+        <h3>4. Iterate, Do not Start Over</h3>
+        <p>If the first output is 80% right, refine with follow-up prompts rather than starting a new conversation. Context builds up.</p>
+      </div>
+      <div class="card">
+        <h3>5. Use @ References Aggressively</h3>
+        <p><code>@workspace</code>, <code>#file</code>, <code>#selection</code> &mdash; the more context you provide, the more accurate the output.</p>
+      </div>
+      <div class="card">
+        <h3>6. Review Before Accepting</h3>
+        <p>Always read the suggestion. Watch for hallucinated APIs, incorrect business logic, or security issues. You own the code.</p>
+      </div>
+    </div>
+
+    <h2>What Copilot Is Not Good At</h2>
+    <div class="card">
+      <ul>
+        <li><strong>It does not know your business rules</strong> &mdash; it can guess, but you must verify domain logic</li>
+        <li><strong>It can hallucinate APIs</strong> &mdash; especially for newer or less common libraries</li>
+        <li><strong>It does not replace understanding</strong> &mdash; use it to accelerate work you understand, not to write code you cannot read</li>
+        <li><strong>Security-critical code</strong> &mdash; always have a human review security-sensitive paths</li>
+        <li><strong>It has a knowledge cutoff</strong> &mdash; very new frameworks or breaking changes may not be reflected</li>
+      </ul>
+    </div>
+
+    <h2>Privacy &amp; Security</h2>
+    <div class="info-box green">
+      <strong>On the Free tier:</strong>
+      <ul>
+        <li>Code snippets are sent to GitHub&rsquo;s servers for processing &mdash; they are not used to train models</li>
+        <li>Prompts and suggestions are not retained after the response is returned (on Business/Enterprise plans)</li>
+        <li>Do not paste secrets, credentials, or sensitive personal data into prompts</li>
+        <li>For the organisation: GitHub Copilot Business/Enterprise gives you data exclusion policies, audit logs, and IP indemnity</li>
+      </ul>
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="cli">&larr; Copilot CLI</a>
+      <a class="page-nav-btn" data-page="resources">Resources &amp; Next Steps &rarr;</a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 15 · RESOURCES ═══════════════════════ -->
+  <section id="resources" class="page">
+    <h1>Resources &amp; Next Steps</h1>
+    <p class="page-subtitle">Keep going after the workshop</p>
+
+    <h2>Free Tier vs Business &mdash; When to Upgrade?</h2>
+    <div class="info-box yellow">
+      <strong>The Free tier is great for evaluation.</strong> When the team is ready to adopt, Copilot Business ($19/seat/month) adds unlimited completions and chat, centralised management, organisation policy controls, audit logs, and IP indemnity. Enterprise ($39/seat) adds Copilot knowledge bases, fine-tuned models, and PR summaries.
+    </div>
+
+    <h2>Lab Exercises</h2>
+    <div class="info-box purple">
+      <strong>Hands-on lab guide available!</strong> Open <strong>copilot-github-labs.html</strong> for step-by-step exercises with the lab repos. Clone the <strong>github-copilot-labs</strong> repo to get the infra-lab and dev-lab folders with code to complete, bugs to find, and scripts to improve.
+    </div>
+
+    <h2>Useful Links</h2>
+    <div class="card">
+      <h3>Documentation &amp; Learning</h3>
+      <ul>
+        <li><strong>GitHub Copilot Docs:</strong> docs.github.com/copilot</li>
+        <li><strong>VS Code Copilot Tips:</strong> code.visualstudio.com/docs/copilot/overview</li>
+        <li><strong>Copilot Chat Cookbook:</strong> docs.github.com/copilot/example-prompts-for-github-copilot-chat</li>
+        <li><strong>GitHub Skills: Copilot:</strong> github.com/skills/copilot-codespaces-vscode</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Keyboard Shortcuts (VS Code, Windows)</h3>
+      <table class="compare-table">
+        <tr><th>Action</th><th>Shortcut</th></tr>
+        <tr><td>Open Copilot Chat panel</td><td><span class="shortcut-key">Ctrl+Alt+I</span></td></tr>
+        <tr><td>Inline chat</td><td><span class="shortcut-key">Ctrl+I</span></td></tr>
+        <tr><td>Accept suggestion</td><td><span class="shortcut-key">Tab</span></td></tr>
+        <tr><td>Dismiss suggestion</td><td><span class="shortcut-key">Esc</span></td></tr>
+        <tr><td>Next / previous suggestion</td><td><span class="shortcut-key">Alt+]</span> / <span class="shortcut-key">Alt+[</span></td></tr>
+        <tr><td>Accept word-by-word</td><td><span class="shortcut-key">Ctrl+Right</span></td></tr>
+        <tr><td>Trigger suggestion manually</td><td><span class="shortcut-key">Alt+\</span></td></tr>
+        <tr><td>Terminal chat</td><td><span class="shortcut-key">Ctrl+I</span> (in terminal)</td></tr>
+        <tr><td>Quick fix</td><td><span class="shortcut-key">Ctrl+.</span></td></tr>
+      </table>
+    </div>
+
+    <h2>Recommended Actions After the Session</h2>
+    <ol>
+      <li><strong>Use Copilot daily for one week</strong> &mdash; commit to trying it on every task for 5 days</li>
+      <li><strong>Track what you use it for</strong> &mdash; note which tasks it accelerates (and where it does not help)</li>
+      <li><strong>Share wins with your team</strong> &mdash; &ldquo;Copilot helped me write this in 2 minutes instead of 20&rdquo;</li>
+      <li><strong>Identify a team champion</strong> &mdash; someone who becomes the go-to for Copilot tips and tricks</li>
+      <li><strong>Report back to your manager</strong> &mdash; quantify time saved to build the case for Business licences</li>
+    </ol>
+
+    <div class="info-box green">
+      <strong>Thank you for your time today.</strong> The best way to learn Copilot is to use it. Start with the tasks you find most tedious &mdash; test generation, documentation, boilerplate configuration &mdash; and let Copilot handle the first draft. You will be surprised how quickly it becomes second nature.
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="tips">&larr; Tips &amp; Best Practices</a>
+      <a class="page-nav-btn" data-page="contact">Your Account Team &rarr;</a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 16 · CONTACT ═══════════════════════ -->
+  <section id="contact" class="page">
+    <h1>Your Microsoft Account Team</h1>
+    <p class="page-subtitle">Ready to help with bespoke sessions, licensing, and adoption planning</p>
+
+    <div class="info-box blue">
+      <strong>We&rsquo;re here to help.</strong> Whether you want a deeper dive into a specific Copilot capability, a bespoke hands-on session tailored to a particular team or role, or guidance on licensing and rollout strategy &mdash; your dedicated Microsoft account team is ready to support Connells&rsquo; journey with GitHub Copilot.
+    </div>
+
+    <div class="three-col">
+      <div class="card">
+        <h3>James Dellamura</h3>
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 0.75rem;">Account Executive &mdash; Financial Services</p>
+        <p><a href="mailto:jadellam@microsoft.com" style="color: var(--accent); text-decoration: none; font-weight: 600;">jadellam@microsoft.com</a></p>
+      </div>
+      <div class="card">
+        <h3>Manni Sagu</h3>
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 0.75rem;">Account Technology Strategist</p>
+        <p><a href="mailto:manpreetsagu@microsoft.com" style="color: var(--accent); text-decoration: none; font-weight: 600;">manpreetsagu@microsoft.com</a></p>
+      </div>
+      <div class="card">
+        <h3>Thamim Karim</h3>
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 0.75rem;">Senior Specialist, AI Business Solutions</p>
+        <p><a href="mailto:thamimkarim@microsoft.com" style="color: var(--accent); text-decoration: none; font-weight: 600;">thamimkarim@microsoft.com</a></p>
+      </div>
+    </div>
+
+    <h2>What We Can Help With</h2>
+
+    <div class="two-col">
+      <div class="card">
+        <h3>Bespoke Team Sessions</h3>
+        <ul>
+          <li>Tailored workshops for specific teams (data engineering, QA, front-end, security)</li>
+          <li>Deep-dive labs on advanced features like custom instructions, MCP, and prompt files</li>
+          <li>Hackathon-style sessions where teams solve real Connells challenges with Copilot</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Licensing &amp; Rollout</h3>
+        <ul>
+          <li>Copilot Business and Enterprise licensing guidance</li>
+          <li>Phased rollout planning and adoption metrics</li>
+          <li>Security review, data governance, and compliance discussions</li>
+          <li>ROI measurement and executive reporting frameworks</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="info-box green">
+      <strong>Get in touch.</strong> Reach out to any member of the team above to schedule a follow-up session, request a bespoke workshop for your department, or discuss how GitHub Copilot fits into Connells&rsquo; wider development and infrastructure strategy. We look forward to continuing the conversation.
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-btn" data-page="resources">&larr; Resources &amp; Next Steps</a>
+      <span class="page-nav-btn disabled">End of Guide</span>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══════════════════════ SCRIPT ═══════════════════════ -->
+<script>
+(function(){
+  const links = document.querySelectorAll('.nav-link, .page-nav-btn[data-page]');
+  const pages = document.querySelectorAll('.page');
+  const navLinks = document.querySelectorAll('.nav-link');
+  function goTo(id){
+    pages.forEach(p => p.classList.remove('active'));
+    navLinks.forEach(l => l.classList.remove('active'));
+    const page = document.getElementById(id);
+    if(page) page.classList.add('active');
+    const nav = document.querySelector(`.nav-link[data-page="${id}"]`);
+    if(nav) nav.classList.add('active');
+    window.scrollTo({top:0});
+    document.querySelector('.main').scrollTo({top:0});
+  }
+  links.forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const id = link.getAttribute('data-page');
+      if(id) goTo(id);
+    });
+  });
+})();
+</script>
+</body>
+</html>
